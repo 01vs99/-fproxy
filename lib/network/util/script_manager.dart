@@ -10,6 +10,34 @@ import 'package:path_provider/path_provider.dart';
 /// 2023/10/06
 /// js脚本
 class ScriptManager {
+  static String template = """
+// 在请求到达服务器之前,调用此函数,您可以在此处修改请求数据
+// 例如Add/Update/Remove：Queries、Headers、Body
+async function onRequest(context, request) {
+  console.log(request.url);
+  //URL参数
+  //request.queries["name"] = "value";
+  // 更新或添加新标头
+  //request.headers["X-New-Headers"] = "My-Value";
+  
+  // Update Body 使用fetch API请求接口，具体文档可网上搜索fetch API
+  //response.body = await fetch('https://www.baidu.com/').then(response => response.text());
+  return request;
+}
+
+// 在将响应数据发送到客户端之前,调用此函数,您可以在此处修改响应数据
+async function onResponse(context, request, response) {
+  // 更新或添加新标头
+  // response.headers["Name"] = "Value";
+  // response.statusCode = 200;
+
+  //var body = JSON.parse(response.body);
+  //body['key'] = "value";
+  //response.body = JSON.stringify(body);
+  return response;
+}
+  """;
+
   static String separator = Platform.pathSeparator;
   static ScriptManager? _instance;
   bool enabled = true;
@@ -109,7 +137,6 @@ class ScriptManager {
   Future<void> removeScript(int index) async {
     var item = list.removeAt(index);
     File(item.scriptPath!).delete();
-    flushConfig();
   }
 
   ///刷新配置
@@ -171,6 +198,7 @@ class ScriptManager {
     return response;
   }
 
+  /// js结果转换
   static Future<dynamic> jsResultResolve(JsEvalResult jsResult) async {
     if (jsResult.isPromise) {
       jsResult = await flutterJs.handlePromise(jsResult);
@@ -238,6 +266,7 @@ class ScriptManager {
     response.body = map['body']?.toString().codeUnits;
     return response;
   }
+
 }
 
 class ScriptItem {

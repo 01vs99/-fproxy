@@ -14,5 +14,6 @@ jobs:
       - uses: tgymnich/fork-sync@v1.8
         with:
           owner: wanghongenpin
+          repo: network_proxy_flutter
           base: main
           head: main

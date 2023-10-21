@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -121,9 +123,9 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     var headers = requestKey.currentState?.getHeaders();
     var requestBody = requestKey.currentState?.getBody();
 
-    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), currentState.requestUrl);
+    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.encodeFull(currentState.requestUrl));
     request.headers.addAll(headers);
-    request.body = requestBody?.codeUnits;
+    request.body = requestBody == null ? null : utf8.encode(requestBody);
 
     var proxyInfo = widget.proxyServer?.isRunning == true ? ProxyInfo.of("127.0.0.1", widget.proxyServer!.port) : null;
     HttpClients.proxyRequest(proxyInfo: proxyInfo, request).then((response) {

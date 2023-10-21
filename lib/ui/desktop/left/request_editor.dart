@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -126,9 +127,11 @@ class RequestEditorState extends State<RequestEditor> {
     var headers = requestKey.currentState?.getHeaders();
     var requestBody = requestKey.currentState?.getBody();
 
-    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), currentState.requestUrl);
+    HttpRequest request =
+        HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.encodeFull(currentState.requestUrl));
     request.headers.addAll(headers);
-    request.body = requestBody?.codeUnits;
+
+    request.body = requestBody == null ? null : utf8.encode(requestBody);
 
     HttpClients.proxyRequest(request).then((response) {
       FlutterToastr.show('请求成功', context);

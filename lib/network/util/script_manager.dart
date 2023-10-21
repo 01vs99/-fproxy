@@ -107,7 +107,8 @@ async function onResponse(context, request, response) {
     if (_scriptMap.containsKey(item)) {
       return _scriptMap[item]!;
     }
-    var script = await File(item.scriptPath!).readAsString();
+    final home = await homePath();
+    var script = await File(home + item.scriptPath!).readAsString();
     _scriptMap[item] = script;
     return script;
   }
@@ -115,10 +116,11 @@ async function onResponse(context, request, response) {
   ///添加脚本
   Future<void> addScript(ScriptItem item, String script) async {
     final path = await homePath();
-    var file = File('$path${separator}scripts$separator${DateTime.now().millisecondsSinceEpoch}.js');
+    String scriptPath = "${separator}scripts$separator${DateTime.now().millisecondsSinceEpoch}.js";
+    var file = File(path + scriptPath);
     await file.create(recursive: true);
     file.writeAsString(script);
-    item.scriptPath = file.path;
+    item.scriptPath = scriptPath;
     list.add(item);
     _scriptMap[item] = script;
   }
@@ -128,15 +130,25 @@ async function onResponse(context, request, response) {
     if (_scriptMap[item] == script) {
       return;
     }
-
-    File(item.scriptPath!).writeAsString(script);
+    final home = await homePath();
+    File(home + item.scriptPath!).writeAsString(script);
     _scriptMap[item] = script;
   }
 
   ///删除脚本
   Future<void> removeScript(int index) async {
     var item = list.removeAt(index);
-    File(item.scriptPath!).delete();
+    final home = await homePath();
+    File(home + item.scriptPath!).delete();
+  }
+
+  Future<void> clean() async {
+    while (list.isNotEmpty) {
+      var item = list.removeLast();
+      final home = await homePath();
+      File(home + item.scriptPath!).delete();
+    }
+    await flushConfig();
   }
 
   ///刷新配置
@@ -199,16 +211,12 @@ async function onResponse(context, request, response) {
 
   /// js结果转换
   static Future<dynamic> jsResultResolve(JsEvalResult jsResult) async {
-    if (jsResult.isPromise) {
+    if (jsResult.isPromise || jsResult.rawResult is Future) {
       jsResult = await flutterJs.handlePromise(jsResult);
     }
     var result = jsResult.rawResult;
     if (Platform.isMacOS || Platform.isIOS) {
       result = flutterJs.convertValue(jsResult);
-    }
-    if (result is Future) {
-      flutterJs.executePendingJob();
-      result = await (jsResult.rawResult as Future);
     }
     if (result is String) {
       result = jsonDecode(result);
@@ -266,7 +274,6 @@ async function onResponse(context, request, response) {
     response.body = map['body']?.toString().codeUnits;
     return response;
   }
-
 }
 
 class ScriptItem {
@@ -280,10 +287,6 @@ class ScriptItem {
 
   //匹配url
   bool match(String url) {
-    if (!this.url.startsWith('http://') && !this.url.startsWith('https://')) {
-      //不是http开头的url 需要去掉协议
-      url = url.substring(url.indexOf('://') + 3);
-    }
     urlReg ??= RegExp(this.url.replaceAll("*", ".*"));
     return urlReg!.hasMatch(url);
   }

@@ -5,10 +5,13 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:network_proxy/network/http/http.dart';
+import 'package:network_proxy/network/util/request_rewrite.dart';
 import 'package:network_proxy/network/util/script_manager.dart';
 import 'package:network_proxy/ui/component/encoder.dart';
+import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/content/body.dart';
 import 'package:network_proxy/ui/desktop/left/request_editor.dart';
+import 'package:network_proxy/ui/desktop/toolbar/setting/request_rewrite.dart';
 import 'package:network_proxy/ui/desktop/toolbar/setting/script.dart';
 import 'package:network_proxy/utils/platform.dart';
 import 'package:path_provider/path_provider.dart';
@@ -45,33 +48,57 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   if (argument['name'] == 'ScriptWidget') {
     return ScriptWidget(windowId: windowId);
   }
+  //请求重写
+  if (argument['name'] == 'RequestRewriteWidget') {
+    return futureWidget(
+        RequestRewrites.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
+  }
 
   return const SizedBox();
 }
 
-//打开编码窗口
-encodeWindow(EncoderType type, BuildContext context, [String? text]) async {
-  if (Platforms.isMobile()) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => EncoderWidget(type: type, text: text)));
-    return;
+enum Operation {
+  add,
+  update,
+  delete,
+  refresh;
+
+  static Operation of(String name) {
+    return values.firstWhere((element) => element.name == name);
+  }
+}
+
+class MultiWindow {
+  /// 刷新请求重写
+  static Future<void> invokeRefreshRewrite(Operation operation, {int? index, RequestRewriteRule? rule}) async {
+    await DesktopMultiWindow.invokeMethod(
+        0, "refreshRequestRewrite", {"operation": operation.name, 'index': index, 'rule': rule?.toJson()});
   }
 
-  var ratio = 1.0;
-  if (Platform.isWindows) {
-    ratio = WindowManager.instance.getDevicePixelRatio();
+  static bool _refreshRewrite = false;
+
+  static void _handleRefreshRewrite(Operation operation, Map<dynamic, dynamic> arguments) {
+    if (Operation.add == operation) {
+      RequestRewrites.instance.then((it) => it.addRule(RequestRewriteRule.formJson(arguments['rule'])));
+    } else if (Operation.update == operation) {
+      RequestRewrites.instance
+          .then((it) => it.rules[arguments['index']] = RequestRewriteRule.formJson(arguments['rule']));
+    } else if (Operation.delete == operation) {
+      RequestRewrites.instance.then((it) => it.removeIndex([arguments['index']]));
+    }
+
+    if (_refreshRewrite) return;
+    _refreshRewrite = true;
+    Future.delayed(const Duration(milliseconds: 1000), () async {
+      _refreshRewrite = false;
+      (await RequestRewrites.instance).flushRequestRewriteConfig();
+    });
   }
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'EncoderWidget', 'type': type.name, 'text': text},
-  ));
-  window.setTitle('编码');
-  window
-    ..setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio))
-    ..center()
-    ..show();
 }
 
 bool _registerHandler = false;
 
+/// 桌面端多窗口 注册方法处理器
 void registerMethodHandler() {
   if (_registerHandler) {
     return;
@@ -84,6 +111,12 @@ void registerMethodHandler() {
       await ScriptManager.instance.then((value) {
         return value.reloadScript();
       });
+      return 'done';
+    }
+
+    if (call.method == 'refreshRequestRewrite' && fromWindowId != 0) {
+      MultiWindow._handleRefreshRewrite(Operation.of(call.arguments['operation']), call.arguments);
+      return 'done';
     }
 
     if (call.method == 'getApplicationSupportDirectory') {
@@ -111,6 +144,27 @@ void registerMethodHandler() {
   });
 }
 
+///打开编码窗口
+encodeWindow(EncoderType type, BuildContext context, [String? text]) async {
+  if (Platforms.isMobile()) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => EncoderWidget(type: type, text: text)));
+    return;
+  }
+
+  var ratio = 1.0;
+  if (Platform.isWindows) {
+    ratio = WindowManager.instance.getDevicePixelRatio();
+  }
+  final window = await DesktopMultiWindow.createWindow(jsonEncode(
+    {'name': 'EncoderWidget', 'type': type.name, 'text': text},
+  ));
+  window.setTitle('编码');
+  window
+    ..setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio))
+    ..center()
+    ..show();
+}
+
 ///打开脚本窗口
 openScriptWindow() async {
   var ratio = 1.0;
@@ -124,6 +178,23 @@ openScriptWindow() async {
   window.setTitle('脚本');
   window
     ..setFrame(const Offset(30, 0) & Size(800 * ratio, 690 * ratio))
+    ..center()
+    ..show();
+}
+
+///打开请求重写窗口
+openRequestRewriteWindow() async {
+  var ratio = 1.0;
+  if (Platform.isWindows) {
+    ratio = WindowManager.instance.getDevicePixelRatio();
+  }
+  registerMethodHandler();
+  final window = await DesktopMultiWindow.createWindow(jsonEncode(
+    {'name': 'RequestRewriteWidget'},
+  ));
+  window.setTitle('请求重写');
+  window
+    ..setFrame(const Offset(50, 0) & Size(800 * ratio, 650 * ratio))
     ..center()
     ..show();
 }

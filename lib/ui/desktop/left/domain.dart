@@ -8,7 +8,7 @@ import 'package:network_proxy/network/channel.dart';
 import 'package:network_proxy/network/host_port.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/util/attribute_keys.dart';
-import 'package:network_proxy/network/util/host_filter.dart';
+import 'package:network_proxy/network/components/host_filter.dart';
 import 'package:network_proxy/ui/component/transition.dart';
 import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/component/widgets.dart';
@@ -86,7 +86,8 @@ class DomainWidgetState extends State<DomainWidget> with AutomaticKeepAliveClien
 
     Widget body = widget.shrinkWrap
         ? SingleChildScrollView(child: Column(children: list.toList()))
-        : ListView.builder(itemCount: list.length, cacheExtent: 1000, itemBuilder: (_, index) => list.elementAt(index));
+        : ListView.builder(
+        itemCount: list.length, cacheExtent: 1000, itemBuilder: (_, index) => list.elementAt(index));
 
     return Scaffold(
         body: body,

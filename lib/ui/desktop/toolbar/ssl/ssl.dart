@@ -22,7 +22,7 @@ class _SslState extends State<SslWidget> {
   @override
   Widget build(BuildContext context) {
     var surfaceTintColor =
-    Brightness.dark == Theme.of(context).brightness ? null : Theme.of(context).colorScheme.background;
+        Brightness.dark == Theme.of(context).brightness ? null : Theme.of(context).colorScheme.background;
 
     return PopupMenuButton<String>(
       icon: Icon(Icons.https, color: widget.proxyServer.enableSsl ? null : Colors.red),
@@ -139,6 +139,7 @@ class _SslState extends State<SslWidget> {
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
               contentPadding: const EdgeInsets.all(16),
               title: const Row(children: [
                 Text("iOS根证书安装指南", style: TextStyle(fontSize: 16)),
@@ -182,6 +183,7 @@ class _SslState extends State<SslWidget> {
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
               contentPadding: const EdgeInsets.all(16),
               title: const Row(children: [
                 Text("Android根证书安装指南", style: TextStyle(fontSize: 16)),
@@ -198,10 +200,10 @@ class _SslState extends State<SslWidget> {
                     children: [
                       const Text("针对安卓Root用户做了个Magisk模块ProxyPinCA系统证书，安装完重启手机即可。"),
                       TextButton(
-                          child: const Text("https://gitee.com/wanghongenpin/Magisk-ProxyPinCA/releases/tag/1.0.0"),
+                          child: const Text("https://gitee.com/wanghongenpin/Magisk-ProxyPinCA/releases"),
                           onPressed: () {
                             launchUrl(
-                                Uri.parse("https://gitee.com/wanghongenpin/Magisk-ProxyPinCA/releases/tag/1.0.0"));
+                                Uri.parse("https://gitee.com/wanghongenpin/Magisk-ProxyPinCA/releases"));
                           })
                     ]),
                 const SizedBox(height: 10),
@@ -254,7 +256,7 @@ class _Switch extends StatefulWidget {
   final ProxyServer proxyServer;
   final Function(bool val) onEnableChange;
 
-  const _Switch({Key? key, required this.proxyServer, required this.onEnableChange}) : super(key: key);
+  const _Switch({required this.proxyServer, required this.onEnableChange});
 
   @override
   State<_Switch> createState() => _SwitchState();

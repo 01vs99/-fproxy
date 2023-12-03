@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/util/host_filter.dart';
+import 'package:network_proxy/network/components/host_filter.dart';
 
 class FilterDialog extends StatefulWidget {
   final Configuration configuration;
@@ -23,6 +23,7 @@ class _FilterDialogState extends State<FilterDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         titlePadding: const EdgeInsets.only(left: 20, top: 10, right: 15),
         contentPadding: const EdgeInsets.only(left: 20, right: 20),
         scrollable: true,

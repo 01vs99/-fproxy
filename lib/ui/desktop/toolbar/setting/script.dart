@@ -27,7 +27,7 @@ import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/script_manager.dart';
+import 'package:network_proxy/network/components/script_manager.dart';
 import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/component/widgets.dart';
 
@@ -224,6 +224,7 @@ class _ScriptEditState extends State<ScriptEdit> {
     GlobalKey formKey = GlobalKey<FormState>();
     return AlertDialog(
         scrollable: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         titlePadding: const EdgeInsets.only(left: 15, top: 5, right: 15),
         title: Row(children: [
           const Text("编辑脚本", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
@@ -369,7 +370,7 @@ class _ScriptListState extends State<ScriptList> {
                   SizedBox(
                       width: 40,
                       child: Transform.scale(
-                          scale: 0.65,
+                          scale: 0.6,
                           child: SwitchWidget(
                               value: list[index].enabled,
                               onChanged: (val) {

@@ -2,32 +2,33 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
 import 'package:network_proxy/ui/component/chinese_font.dart';
 import 'package:network_proxy/ui/component/multi_window.dart';
+import 'package:network_proxy/ui/configuration.dart';
 import 'package:network_proxy/ui/desktop/desktop.dart';
 import 'package:network_proxy/ui/mobile/mobile.dart';
-import 'package:network_proxy/ui/ui_configuration.dart';
 import 'package:network_proxy/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  var instance = UIConfiguration.instance;
+  var instance = AppConfiguration.instance;
   //多窗口
   if (args.firstOrNull == 'multi_window') {
     final windowId = int.parse(args[1]);
     final argument = args[2].isEmpty ? const {} : jsonDecode(args[2]) as Map<String, dynamic>;
-    runApp(FluentApp(multiWindow(windowId, argument), uiConfiguration: (await instance)));
+    runApp(FluentApp(multiWindow(windowId, argument), (await instance)));
     return;
   }
 
   var configuration = Configuration.instance;
   //移动端
   if (Platforms.isMobile()) {
-    var uiConfiguration = await instance;
-    runApp(FluentApp(MobileHomePage(configuration: (await configuration)), uiConfiguration: uiConfiguration));
+    var appConfiguration = await instance;
+    runApp(FluentApp(MobileHomePage((await configuration), appConfiguration), appConfiguration));
     return;
   }
 
@@ -44,40 +45,19 @@ void main(List<String> args) async {
     await windowManager.focus();
   });
 
-  var uiConfiguration = await instance;
+  var appConfiguration = await instance;
   registerMethodHandler();
-  runApp(FluentApp(DesktopHomePage(configuration: await configuration), uiConfiguration: uiConfiguration));
+  runApp(FluentApp(DesktopHomePage(await configuration, appConfiguration), appConfiguration));
 }
-
-class ThemeModel {
-  ThemeMode mode;
-  bool useMaterial3;
-
-  ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true});
-
-  ThemeModel copy({ThemeMode? mode, bool? useMaterial3}) => ThemeModel(
-        mode: mode ?? this.mode,
-        useMaterial3: useMaterial3 ?? this.useMaterial3,
-      );
-}
-
-///主题
-late ValueNotifier<ThemeModel> themeNotifier;
 
 class FluentApp extends StatelessWidget {
   final Widget home;
-  final UIConfiguration uiConfiguration;
+  final AppConfiguration appConfiguration;
 
-  const FluentApp(
-    this.home, {
-    super.key,
-    required this.uiConfiguration,
-  });
+  const FluentApp(this.home, this.appConfiguration, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    themeNotifier = ValueNotifier(uiConfiguration.theme);
-
     var light = lightTheme();
     var darkTheme = config(ThemeData.dark(useMaterial3: false));
 
@@ -91,18 +71,18 @@ class FluentApp extends StatelessWidget {
       darkTheme = darkTheme.useSystemChineseFont();
     }
 
-    return ValueListenableBuilder<ThemeModel>(
-        valueListenable: themeNotifier,
+    return ValueListenableBuilder<bool>(
+        valueListenable: appConfiguration.globalChange,
         builder: (_, current, __) {
-          uiConfiguration.theme = current;
-          uiConfiguration.flushConfig();
-
           return MaterialApp(
             title: 'ProxyPin',
             debugShowCheckedModeBanner: false,
-            theme: current.useMaterial3 ? material3Light : light,
-            darkTheme: current.useMaterial3 ? material3Dark : darkTheme,
-            themeMode: current.mode,
+            theme: appConfiguration.useMaterial3 ? material3Light : light,
+            darkTheme: appConfiguration.useMaterial3 ? material3Dark : darkTheme,
+            themeMode: appConfiguration.themeMode,
+            locale: appConfiguration.language,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: home,
           );
         });

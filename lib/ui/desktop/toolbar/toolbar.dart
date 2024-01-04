@@ -9,9 +9,11 @@ import 'package:network_proxy/ui/desktop/toolbar/ssl/ssl.dart';
 import 'package:network_proxy/ui/launch/launch.dart';
 import 'package:network_proxy/utils/ip.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../left/domain.dart';
-
+import '../left/list.dart';
+/// @author wanghongen
+/// 2023/10/8
 class Toolbar extends StatefulWidget {
   final ProxyServer proxyServer;
   final GlobalKey<DomainWidgetState> domainStateKey;
@@ -26,6 +28,9 @@ class Toolbar extends StatefulWidget {
 }
 
 class _ToolbarState extends State<Toolbar> {
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
   @override
   void initState() {
     super.initState();
@@ -65,7 +70,7 @@ class _ToolbarState extends State<Toolbar> {
         SocketLaunch(proxyServer: widget.proxyServer),
         const Padding(padding: EdgeInsets.only(left: 20)),
         IconButton(
-            tooltip: "清理",
+            tooltip: localizations.clear,
             icon: const Icon(Icons.cleaning_services_outlined),
             onPressed: () {
               widget.domainStateKey.currentState?.clean();
@@ -76,7 +81,7 @@ class _ToolbarState extends State<Toolbar> {
         Setting(proxyServer: widget.proxyServer), // 设置
         const Padding(padding: EdgeInsets.only(left: 20)),
         IconButton(
-            tooltip: "手机连接",
+            tooltip: localizations.mobileConnect,
             icon: const Icon(Icons.phone_iphone),
             onPressed: () async {
               final ips = await localIps();

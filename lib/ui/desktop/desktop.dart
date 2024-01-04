@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
 import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/channel.dart';
@@ -7,18 +8,24 @@ import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/http/websocket.dart';
 import 'package:network_proxy/ui/component/state_component.dart';
 import 'package:network_proxy/ui/component/toolbox.dart';
+import 'package:network_proxy/ui/configuration.dart';
 import 'package:network_proxy/ui/content/panel.dart';
-import 'package:network_proxy/ui/desktop/left/domain.dart';
 import 'package:network_proxy/ui/desktop/left/favorite.dart';
 import 'package:network_proxy/ui/desktop/left/history.dart';
+import 'package:network_proxy/ui/desktop/left/list.dart';
+import 'package:network_proxy/ui/desktop/preference.dart';
 import 'package:network_proxy/ui/desktop/toolbar/toolbar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../component/split_view.dart';
 
+/// @author wanghongen
+/// 2023/10/8
 class DesktopHomePage extends StatefulWidget {
   final Configuration configuration;
+  final AppConfiguration appConfiguration;
 
-  const DesktopHomePage({super.key, required this.configuration});
+  const DesktopHomePage(this.configuration, this.appConfiguration, {super.key, required});
 
   @override
   State<DesktopHomePage> createState() => _DesktopHomePagePageState();
@@ -32,12 +39,25 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   late ProxyServer proxyServer = ProxyServer(widget.configuration);
   late NetworkTabController panel;
 
-  final List<NavigationRailDestination> destinations = const [
-    NavigationRailDestination(icon: Icon(Icons.workspaces), label: Text("抓包", style: TextStyle(fontSize: 12))),
-    NavigationRailDestination(icon: Icon(Icons.favorite), label: Text("收藏", style: TextStyle(fontSize: 12))),
-    NavigationRailDestination(icon: Icon(Icons.history), label: Text("历史", style: TextStyle(fontSize: 12))),
-    NavigationRailDestination(icon: Icon(Icons.construction), label: Text("工具箱", style: TextStyle(fontSize: 12))),
-  ];
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  List<NavigationRailDestination> get destinations => [
+        NavigationRailDestination(
+            padding: const EdgeInsets.only(bottom: 3),
+            icon: const Icon(Icons.workspaces),
+            label: Text(localizations.requests, style: Theme.of(context).textTheme.bodySmall)),
+        NavigationRailDestination(
+            padding: const EdgeInsets.only(bottom: 3),
+            icon: const Icon(Icons.favorite),
+            label: Text(localizations.favorites, style: Theme.of(context).textTheme.bodySmall)),
+        NavigationRailDestination(
+            padding: const EdgeInsets.only(bottom: 3),
+            icon: const Icon(Icons.history),
+            label: Text(localizations.history, style: Theme.of(context).textTheme.bodySmall)),
+        NavigationRailDestination(
+            icon: const Icon(Icons.construction),
+            label: Text(localizations.toolbox, style: Theme.of(context).textTheme.bodySmall)),
+      ];
 
   @override
   void onRequest(Channel channel, HttpRequest request) {
@@ -45,8 +65,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   }
 
   @override
-  void onResponse(Channel channel, HttpResponse response) {
-    domainStateKey.currentState!.addResponse(channel, response);
+  void onResponse(ChannelContext channelContext, HttpResponse response) {
+    domainStateKey.currentState!.addResponse(channelContext, response);
   }
 
   @override
@@ -62,7 +82,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
-    if (widget.configuration.upgradeNoticeV6) {
+    if (widget.appConfiguration.upgradeNoticeV7) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -71,25 +91,13 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
 
   @override
   Widget build(BuildContext context) {
-    final domainWidget = DomainWidget(key: domainStateKey, proxyServer: proxyServer, panel: panel);
+    final domainWidget = DomainList(key: domainStateKey, proxyServer: proxyServer, panel: panel);
+
     return Scaffold(
         appBar: Tab(child: Toolbar(proxyServer, domainStateKey, sideNotifier: _selectIndex)),
         body: Row(
           children: [
-            ValueListenableBuilder(
-                valueListenable: _selectIndex,
-                builder: (_, index, __) {
-                  if (_selectIndex.value == -1) {
-                    return const SizedBox();
-                  }
-                  return Container(
-                      decoration: BoxDecoration(
-                          border: Border(
-                        right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2),
-                      )),
-                      width: 55,
-                      child: leftNavigation(index));
-                }),
+            navigationBar(),
             Expanded(
               child: VerticalSplitView(
                   ratio: 0.3,
@@ -109,9 +117,54 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
         ));
   }
 
+  Widget navigationBar() {
+    return ValueListenableBuilder(
+        valueListenable: _selectIndex,
+        builder: (_, index, __) {
+          if (_selectIndex.value == -1) {
+            return const SizedBox();
+          }
+          return Container(
+            width: localizations.localeName == 'zh' ? 58 : 72,
+            decoration:
+                BoxDecoration(border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2))),
+            child: Column(children: <Widget>[
+              SizedBox(
+                height: 300,
+                child: leftNavigation(index),
+              ),
+              Expanded(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Tooltip(
+                      message: localizations.preference,
+                      preferBelow: false,
+                      child: IconButton(
+                          onPressed: () {
+                            showDialog(context: context, builder: (_) => Preference(widget.appConfiguration));
+                          },
+                          icon: Icon(Icons.settings_outlined, color: Colors.grey.shade500))),
+                  const SizedBox(height: 5),
+                  Tooltip(
+                      preferBelow: true,
+                      message: localizations.feedback,
+                      child: IconButton(
+                        onPressed: () =>
+                            launchUrl(Uri.parse("https://github.com/wanghongenpin/network_proxy_flutter/issues")),
+                        icon: Icon(Icons.feedback_outlined, color: Colors.grey.shade500),
+                      )),
+                  const SizedBox(height: 10),
+                ],
+              ))
+            ]),
+          );
+        });
+  }
+
   Widget leftNavigation(int index) {
     return NavigationRail(
-        minWidth: 55,
+        minWidth: 58,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         selectedIconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
         labelType: NavigationRailLabelType.all,
@@ -125,6 +178,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
 
   //更新引导
   showUpgradeNotice() {
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -134,24 +189,28 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.configuration.upgradeNoticeV6 = false;
-                      widget.configuration.flushConfig();
+                      widget.appConfiguration.upgradeNoticeV7 = false;
+                      widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
-                    child: const Text('关闭'))
+                    child: Text(localizations.cancel))
               ],
-              title: const Text('更新内容V1.0.6', style: TextStyle(fontSize: 18)),
-              content: const Text(
-                  '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
-                  '点击的HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                  '1. 请求重写增加 修改请求，可根据正则替换；\n'
-                  '2. 请求重写批量导入、导出；\n'
-                  '3. 支持WebSocket抓包；\n'
-                  '4. 安卓支持小窗口模式；\n'
-                  '5. 优化curl导入；\n'
-                  '6. 支持head请求，修复手机端请求重写切换应用恢复原始的请求问题；\n'
-                  '',
-                  style: TextStyle(fontSize: 14)));
+              title: Text(isCN ? '更新内容V1.0.7' : "Update content V1.0.7", style: const TextStyle(fontSize: 18)),
+              content: Text(
+                  isCN
+                      ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
+                          '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
+                          '1. 增加多语言支持；\n'
+                          '2. 请求重写支持文件选择；\n'
+                          '3. 抓包详情页面Headers默认展开配置；\n'
+                          '4. 请求编辑URL参数支持表单编辑；\n'
+                      : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
+                          'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
+                          '1. Increase multilingual support；\n'
+                          '2. Request Rewrite support file selection；\n'
+                          '3. Details page Headers Expanded Config；\n'
+                          '4. Request Edit URL parameter support for form editing；\n',
+                  style: const TextStyle(fontSize: 14)));
         });
   }
 }

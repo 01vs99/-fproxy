@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
 import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/util/system_proxy.dart';
 import 'package:network_proxy/ui/component/multi_window.dart';
+import 'package:network_proxy/ui/component/utils.dart';
+import 'package:network_proxy/ui/configuration.dart';
 import 'package:network_proxy/ui/desktop/toolbar/setting/external_proxy.dart';
 import 'package:network_proxy/ui/desktop/toolbar/setting/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,6 +15,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'filter.dart';
 
 ///设置菜单
+/// @author wanghongen
+/// 2023/10/8
 class Setting extends StatefulWidget {
   final ProxyServer proxyServer;
 
@@ -23,6 +28,8 @@ class Setting extends StatefulWidget {
 
 class _SettingState extends State<Setting> {
   late Configuration configuration;
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -48,7 +55,7 @@ class _SettingState extends State<Setting> {
       builder: (context, controller, child) {
         return IconButton(
             icon: const Icon(Icons.settings),
-            tooltip: "设置",
+            tooltip: localizations.setting,
             onPressed: () {
               if (controller.isOpen) {
                 controller.close();
@@ -59,11 +66,11 @@ class _SettingState extends State<Setting> {
       },
       menuChildren: [
         _ProxyMenu(proxyServer: widget.proxyServer),
-        const ThemeSetting(),
-        item("域名过滤", onPressed: hostFilter),
-        item("请求重写", onPressed: requestRewrite),
-        item("脚本", onPressed: () => openScriptWindow()),
-        item("外部代理设置", onPressed: setExternalProxy),
+        futureWidget(AppConfiguration.instance, (appConfiguration) => ThemeSetting(appConfiguration: appConfiguration)),
+        item(localizations.domainFilter, onPressed: hostFilter),
+        item(localizations.requestRewrite, onPressed: requestRewrite),
+        item(localizations.script, onPressed: () => openScriptWindow()),
+        item(localizations.externalProxy, onPressed: setExternalProxy),
         item("Github", onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/network_proxy_flutter"))),
       ],
     );
@@ -125,6 +132,8 @@ class _ProxyMenuState extends State<_ProxyMenu> {
   late Configuration configuration;
   bool changed = false;
 
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
   @override
   void initState() {
     configuration = widget.proxyServer.configuration;
@@ -169,7 +178,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("代理忽略域名", style: TextStyle(fontSize: 14)),
+                  Text(localizations.proxyIgnoreDomain, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 3),
                   Text("多个使用;分割", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 ],
@@ -177,7 +186,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
               Padding(
                   padding: const EdgeInsets.only(left: 35),
                   child: TextButton(
-                    child: const Text("重置"),
+                    child: Text(localizations.reset),
                     onPressed: () {
                       textEditingController.text = SystemProxy.proxyPassDomains;
                     },
@@ -198,7 +207,9 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                 minLines: 1)),
         const SizedBox(height: 10),
       ],
-      child: const Padding(padding: EdgeInsets.only(left: 10), child: Text("代理", style: TextStyle(fontSize: 14))),
+      child: Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: Text(localizations.proxy, style: const TextStyle(fontSize: 14))),
     );
   }
 
@@ -206,7 +217,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
   Widget setSystemProxy() {
     return SwitchListTile(
         hoverColor: Colors.transparent,
-        title: const Text("设置为系统代理", maxLines: 1),
+        title: Text(localizations.systemProxy, maxLines: 1),
         dense: true,
         value: configuration.enableSystemProxy,
         onChanged: (val) {
@@ -235,6 +246,8 @@ class _PortState extends State<PortWidget> {
   final textController = TextEditingController();
   final FocusNode portFocus = FocusNode();
 
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
   @override
   void initState() {
     super.initState();
@@ -245,8 +258,8 @@ class _PortState extends State<PortWidget> {
         widget.proxyServer.configuration.port = int.parse(textController.text);
 
         if (widget.proxyServer.isRunning) {
-          widget.proxyServer.restart().catchError(
-              (e) => FlutterToastr.show("启动失败，请检查端口号${widget.proxyServer.port}是否被占用", context, duration: 3));
+          String message = localizations.proxyPortRepeat(widget.proxyServer.port);
+          widget.proxyServer.restart().catchError((e) => FlutterToastr.show(message, context, duration: 3));
         }
         widget.proxyServer.configuration.flushConfig();
       }
@@ -264,7 +277,7 @@ class _PortState extends State<PortWidget> {
   Widget build(BuildContext context) {
     return Row(children: [
       const Padding(padding: EdgeInsets.only(left: 15)),
-      Text("端口号：", style: widget.textStyle),
+      Text(localizations.port, style: widget.textStyle),
       SizedBox(
           width: 80,
           child: TextFormField(

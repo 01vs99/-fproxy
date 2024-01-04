@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/http/websocket.dart';
 import 'package:network_proxy/ui/component/share.dart';
 import 'package:network_proxy/ui/component/utils.dart';
+import 'package:network_proxy/ui/configuration.dart';
 import 'package:network_proxy/utils/lang.dart';
+import 'package:network_proxy/utils/platform.dart';
 
 import 'body.dart';
 
@@ -60,6 +63,8 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
     setState(() {});
   }
 
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
   @override
   void initState() {
     super.initState();
@@ -101,7 +106,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
       body: Padding(
           padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
           child: TabBarView(
-            physics: const NeverScrollableScrollPhysics(), //禁止滑动
+            physics: Platforms.isDesktop() ? const NeverScrollableScrollPhysics() : null, //桌面禁止滑动
             controller: _tabController,
             children: [
               SelectionArea(child: general()),
@@ -184,6 +189,8 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
       const SizedBox(height: 20),
       rowWidget("Request Method", request.method.name),
       const SizedBox(height: 20),
+      rowWidget("Protocol", request.protocolVersion),
+      const SizedBox(height: 20),
       rowWidget("Status Code", response?.status.toString()),
       const SizedBox(height: 20),
       rowWidget("Remote Address", response?.remoteAddress),
@@ -264,7 +271,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
     Widget headerWidget = ExpansionTile(
         tilePadding: const EdgeInsets.only(left: 0),
         title: Text("$type Headers", style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        initiallyExpanded: true,
+        initiallyExpanded: AppConfiguration.current?.headerExpanded ?? true,
         shape: const Border(),
         children: headers);
 

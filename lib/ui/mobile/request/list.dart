@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
 import 'package:network_proxy/network/bin/server.dart';
@@ -10,8 +11,8 @@ import 'package:network_proxy/network/components/host_filter.dart';
 import 'package:network_proxy/network/host_port.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/ui/desktop/left/model/search_model.dart';
+import 'package:network_proxy/ui/mobile/mobile.dart';
 import 'package:network_proxy/ui/mobile/request/request.dart';
-import 'package:network_proxy/ui/ui_configuration.dart';
 import 'package:network_proxy/utils/lang.dart';
 
 class RequestListWidget extends StatefulWidget {
@@ -27,16 +28,13 @@ class RequestListWidget extends StatefulWidget {
 }
 
 class RequestListState extends State<RequestListWidget> {
-  final tabs = <Tab>[
-    const Tab(child: Text('全部请求')),
-    const Tab(child: Text('域名列表')),
-  ];
-
   final GlobalKey<RequestSequenceState> requestSequenceKey = GlobalKey<RequestSequenceState>();
   final GlobalKey<DomainListState> domainListKey = GlobalKey<DomainListState>();
 
   //请求列表容器
-  static List<HttpRequest> container = [];
+  List<HttpRequest> container = [];
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -50,7 +48,7 @@ class RequestListState extends State<RequestListWidget> {
   Widget build(BuildContext context) {
     if (pictureInPictureNotifier.value) {
       if (container.isEmpty) {
-        return const Center(child: Text("暂无请求", style: TextStyle(color: Colors.grey)));
+        return Center(child: Text(localizations.emptyData, style: const TextStyle(color: Colors.grey)));
       }
 
       return ListView.separated(
@@ -67,6 +65,10 @@ class RequestListState extends State<RequestListWidget> {
           });
     }
 
+    List<Tab> tabs = [
+      Tab(child: Text(localizations.sequence)),
+      Tab(child: Text(localizations.domainList)),
+    ];
     return DefaultTabController(
         length: tabs.length,
         child: Scaffold(
@@ -96,8 +98,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///添加响应
-  addResponse(Channel channel, HttpResponse response) {
-    response.request?.response = response;
+  addResponse(ChannelContext channelContext, HttpResponse response) {
     requestSequenceKey.currentState?.addResponse(response);
     domainListKey.currentState?.addResponse(response);
   }
@@ -173,7 +174,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   ///添加响应
   addResponse(HttpResponse response) {
-    response.request?.response = response;
     var state = indexes.remove(response.request);
     state?.currentState?.change(response);
 
@@ -283,6 +283,8 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   //搜索关键字
   String? searchText;
 
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
   @override
   initState() {
     super.initState();
@@ -385,12 +387,15 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   Widget title(int index) {
     var value = containerMap[list.elementAt(index)];
     var time = value == null ? '' : formatDate(value.last.requestTime, [m, '/', d, ' ', HH, ':', nn, ':', ss]);
+
     return ListTile(
         visualDensity: const VisualDensity(vertical: -4),
         title: Text(list.elementAt(index).domain, maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right),
-        subtitle: Text("最后请求时间: $time,  次数: ${value?.length}", maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(localizations.domainListSubtitle(value?.length ?? '', time),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
         onLongPress: () => menu(index),
+        contentPadding: const EdgeInsets.only(left: 10),
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) {
             showHostAndPort = list.elementAt(index);
@@ -418,34 +423,38 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
             alignment: WrapAlignment.center,
             children: [
               TextButton(
-                  child: const SizedBox(width: double.infinity, child: Text("添加黑名单", textAlign: TextAlign.center)),
+                  child: SizedBox(
+                      width: double.infinity, child: Text(localizations.addBlacklist, textAlign: TextAlign.center)),
                   onPressed: () {
                     HostFilter.blacklist.add(hostAndPort.host);
                     configuration.flushConfig();
-                    FlutterToastr.show("已添加至黑名单", context);
+                    FlutterToastr.show(localizations.addSuccess, context);
                     Navigator.of(context).pop();
                   }),
               const Divider(thickness: 0.5),
               TextButton(
-                  child: const SizedBox(width: double.infinity, child: Text("添加白名单", textAlign: TextAlign.center)),
+                  child: SizedBox(
+                      width: double.infinity, child: Text(localizations.addWhitelist, textAlign: TextAlign.center)),
                   onPressed: () {
                     HostFilter.whitelist.add(hostAndPort.host);
                     configuration.flushConfig();
-                    FlutterToastr.show("已添加至白名单", context);
+                    FlutterToastr.show(localizations.addSuccess, context);
                     Navigator.of(context).pop();
                   }),
               const Divider(thickness: 0.5),
               TextButton(
-                  child: const SizedBox(width: double.infinity, child: Text("删除白名单", textAlign: TextAlign.center)),
+                  child: SizedBox(
+                      width: double.infinity, child: Text(localizations.deleteWhitelist, textAlign: TextAlign.center)),
                   onPressed: () {
                     HostFilter.whitelist.remove(hostAndPort.host);
                     configuration.flushConfig();
-                    FlutterToastr.show("已删除白名单", context);
+                    FlutterToastr.show(localizations.deleteSuccess, context);
                     Navigator.of(context).pop();
                   }),
               const Divider(thickness: 0.5),
               TextButton(
-                  child: const SizedBox(width: double.infinity, child: Text("删除", textAlign: TextAlign.center)),
+                  child:
+                      SizedBox(width: double.infinity, child: Text(localizations.delete, textAlign: TextAlign.center)),
                   onPressed: () {
                     setState(() {
                       var requests = containerMap.remove(hostAndPort);
@@ -454,7 +463,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
                       if (requests != null) {
                         widget.onRemove?.call(requests);
                       }
-                      FlutterToastr.show("删除成功", context);
+                      FlutterToastr.show(localizations.deleteSuccess, context);
                       Navigator.of(context).pop();
                     });
                   }),
@@ -467,7 +476,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
                     height: 50,
                     width: double.infinity,
                     padding: const EdgeInsets.only(top: 10),
-                    child: const Text("取消", textAlign: TextAlign.center)),
+                    child: Text(localizations.cancel, textAlign: TextAlign.center)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },

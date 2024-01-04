@@ -106,7 +106,7 @@ class HttpHeaders {
     return value.toLowerCase() == "true";
   }
 
-  int get contentLength => getInt(CONTENT_LENGTH) ?? -1;
+  int get contentLength => getInt(CONTENT_LENGTH) ?? 0;
 
   set contentLength(int contentLength) => set(CONTENT_LENGTH, contentLength.toString());
 
@@ -169,6 +169,10 @@ class HttpHeaders {
       json[name] = values.join(";");
     });
     return json;
+  }
+
+  Map<String, List<String>> getHeaders() {
+    return _headers;
   }
 
   ///从json解析

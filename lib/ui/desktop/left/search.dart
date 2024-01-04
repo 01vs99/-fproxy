@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/ui/desktop/left/model/search_model.dart';
 import 'package:network_proxy/ui/desktop/left/search_condition.dart';
 
+/// @author wanghongen
+/// 2023/10/8
 class Search extends StatefulWidget {
   final Function(SearchModel searchModel)? onSearch;
 
@@ -68,27 +71,31 @@ class _SearchState extends State<Search> {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
+    bool isCN = AppLocalizations.of(context)!.localeName == 'zh';
     var height = MediaQuery.of(context).size.height;
-    showMenu(context: context, position: RelativeRect.fromLTRB(10, height - 410, 10, height - 410), items: [
-      PopupMenuItem(
-          padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
-          enabled: false,
-          child: DefaultTextStyle.merge(
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
-              child: SizedBox(
-                  width: 500,
-                  height: 350,
-                  child: SearchConditions(
-                      searchModel: searchModel,
-                      onSearch: (val) {
-                        setState(() {
-                          searchModel = val;
-                          searched = searchModel.isNotEmpty;
-                          keywordController.text = searchModel.keyword ?? '';
-                          widget.onSearch?.call(searchModel);
-                        });
-                      }))))
-    ]);
+    height = isCN ? height - 400 : height - 430;
+    showMenu(
+        context: context,
+        position: RelativeRect.fromLTRB(10, height, 10, height),
+        constraints: const BoxConstraints(minWidth: 260, maxWidth: 330),
+        items: [
+          PopupMenuItem(
+              padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 5),
+              enabled: false,
+              child: DefaultTextStyle.merge(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
+                  child: SizedBox(
+                      child: SearchConditions(
+                          searchModel: searchModel,
+                          onSearch: (val) {
+                            setState(() {
+                              searchModel = val;
+                              searched = searchModel.isNotEmpty;
+                              keywordController.text = searchModel.keyword ?? '';
+                              widget.onSearch?.call(searchModel);
+                            });
+                          }))))
+        ]);
   }
 }
 
@@ -104,19 +111,28 @@ class ContentTypeSelect extends StatefulWidget {
 }
 
 class ContentTypeState extends State<ContentTypeSelect> {
-  String value = "全部";
-  List<String> types = ["JSON", "HTML", "JS", "CSS", "TEXT", "IMAGE", "全部"];
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  String? value;
+  List<String>? types;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    ContentType.json;
+    value ??= localizations.all;
+    types ??= ["JSON", "HTML", "JS", "CSS", "TEXT", "IMAGE", localizations.all];
+
     return PopupMenuButton(
       initialValue: value,
-      offset: Offset(-10, (types.length - types.indexOf(value)) * -30.0 - 10),
-      tooltip: '响应类型',
+      offset: Offset(-10, (types!.length - types!.indexOf(value!)) * -30.0 - 10),
+      tooltip: localizations.responseType,
       constraints: const BoxConstraints(maxWidth: 75),
       child: Wrap(runAlignment: WrapAlignment.center, children: [
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(value!, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
         const Icon(Icons.arrow_drop_up, size: 20)
       ]),
       onSelected: (String value) {
@@ -126,10 +142,10 @@ class ContentTypeState extends State<ContentTypeSelect> {
         setState(() {
           this.value = value;
         });
-        widget.onSelected(value == "全部" ? null : ContentType.valueOf(value));
+        widget.onSelected(value == localizations.all ? null : ContentType.valueOf(value));
       },
       itemBuilder: (BuildContext context) {
-        return types.map(item).toList();
+        return types!.map(item).toList();
       },
     );
   }

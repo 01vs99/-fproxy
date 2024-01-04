@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:network_proxy/native/app_lifecycle.dart';
 import 'package:network_proxy/native/pip.dart';
@@ -15,19 +16,20 @@ import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/http/websocket.dart';
 import 'package:network_proxy/network/http_client.dart';
 import 'package:network_proxy/ui/component/utils.dart';
+import 'package:network_proxy/ui/configuration.dart';
 import 'package:network_proxy/ui/content/panel.dart';
 import 'package:network_proxy/ui/launch/launch.dart';
 import 'package:network_proxy/ui/mobile/connect_remote.dart';
 import 'package:network_proxy/ui/mobile/menu.dart';
 import 'package:network_proxy/ui/mobile/request/list.dart';
 import 'package:network_proxy/ui/mobile/request/search.dart';
-import 'package:network_proxy/ui/ui_configuration.dart';
 import 'package:network_proxy/utils/ip.dart';
 
 class MobileHomePage extends StatefulWidget {
   final Configuration configuration;
+  final AppConfiguration appConfiguration;
 
-  const MobileHomePage({super.key, required this.configuration});
+  const MobileHomePage(this.configuration, this.appConfiguration, {super.key});
 
   @override
   State<StatefulWidget> createState() {
@@ -35,16 +37,23 @@ class MobileHomePage extends StatefulWidget {
   }
 }
 
+///画中画
+final ValueNotifier<bool> pictureInPictureNotifier = ValueNotifier(false);
+
 class MobileHomeState extends State<MobileHomePage> implements EventListener, LifecycleListener {
-  static final GlobalKey<RequestListState> requestStateKey = GlobalKey<RequestListState>();
+  static GlobalKey<RequestListState> requestStateKey = GlobalKey<RequestListState>();
+
+  /// 远程连接
+  final ValueNotifier<RemoteModel> desktop = ValueNotifier(RemoteModel(connect: false));
 
   late ProxyServer proxyServer;
-  ValueNotifier<RemoteModel> desktop = ValueNotifier(RemoteModel(connect: false));
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
-  void onUserLeaveHint() {
+  void onUserLeaveHint() async {
     if (Vpn.isVpnStarted && !pictureInPictureNotifier.value) {
-      if (desktop.value.connect || !Platform.isAndroid || !widget.configuration.smallWindow) {
+      if (desktop.value.connect || !Platform.isAndroid || !(await (AppConfiguration.instance)).smallWindow) {
         return;
       }
 
@@ -76,8 +85,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   }
 
   @override
-  void onResponse(Channel channel, HttpResponse response) {
-    requestStateKey.currentState!.addResponse(channel, response);
+  void onResponse(ChannelContext channelContext, HttpResponse response) {
+    requestStateKey.currentState!.addResponse(channelContext, response);
   }
 
   @override
@@ -106,7 +115,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
       }
     });
 
-    if (widget.configuration.upgradeNoticeV6) {
+    if (widget.appConfiguration.upgradeNoticeV7) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -129,7 +138,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
         onPopInvoked: (d) {
           if (DateTime.now().millisecondsSinceEpoch - exitTime > 2000) {
             exitTime = DateTime.now().millisecondsSinceEpoch;
-            FlutterToastr.show("再按一次退出程序", context, rootNavigator: true, duration: FlutterToastr.lengthLong);
+            FlutterToastr.show(localizations.appExitTips, context,
+                rootNavigator: true, duration: FlutterToastr.lengthLong);
             return;
           }
 
@@ -162,7 +172,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   AppBar appBar() {
     return AppBar(title: MobileSearch(onSearch: (val) => requestStateKey.currentState?.search(val)), actions: [
       IconButton(
-          tooltip: "清理",
+          tooltip: localizations.clear,
           icon: const Icon(Icons.cleaning_services_outlined),
           onPressed: () => requestStateKey.currentState?.clean()),
       const SizedBox(width: 2),
@@ -190,17 +200,22 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   }
 
   showUpgradeNotice() {
-    String content = '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-        '1. 请求重写增加 修改请求，可根据增则替换；\n'
-        '2. 请求重写批量导入、导出；\n'
-        '3. 支持WebSocket抓包；\n'
-        '4. 安卓支持小窗口模式；\n'
-        '5. 优化curl导入；\n'
-        '6. 支持head请求，修复手机端请求重写切换应用恢复原始的请求问题；\n'
-        '';
-    showAlertDialog('更新内容V1.0.6', content, () {
-      widget.configuration.upgradeNoticeV6 = false;
-      widget.configuration.flushConfig();
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+
+    String content = isCN
+        ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
+            '1. 增加多语言支持；\n'
+            '2. 请求重写支持文件选择；\n'
+            '3. 抓包详情页面Headers默认展开配置；\n'
+            '4. 请求编辑URL参数支持表单编辑；\n'
+        : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n\n'
+            '1. Increase multilingual support；\n'
+            '2. Request Rewrite support file selection；\n'
+            '3. Details page Headers Expanded Config；\n';
+            '5. Request Edit URL parameter support for form editing；\n';
+    showAlertDialog(isCN ? '更新内容V1.0.7' : "Update content V1.0.7", content, () {
+      widget.appConfiguration.upgradeNoticeV7 = false;
+      widget.appConfiguration.flushConfig();
     });
   }
 
@@ -208,13 +223,14 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   Widget remoteConnect(RemoteModel value) {
     return Container(
         margin: const EdgeInsets.only(top: 5, bottom: 5),
-        height: 50,
+        height: 55,
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) {
             return ConnectRemote(desktop: desktop, proxyServer: proxyServer);
           })),
-          child: Text("已连接${value.os?.toUpperCase()}，手机抓包已关闭", style: Theme.of(context).textTheme.titleMedium),
+          child: Text(localizations.remoteConnected(desktop.value.os ?? ''),
+              style: Theme.of(context).textTheme.titleMedium),
         ));
   }
 
@@ -231,7 +247,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                       onClose.call();
                       Navigator.pop(context);
                     },
-                    child: const Text('关闭'))
+                    child: Text(localizations.cancel))
               ],
               title: Text(title, style: const TextStyle(fontSize: 18)),
               content: Text(content));
@@ -262,7 +278,10 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
         timer.cancel();
         desktop.value = RemoteModel(connect: false);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("检查远程连接失败，已断开")));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(localizations.remoteConnectDisconnect),
+              action: SnackBarAction(
+                  label: localizations.reconnect, onPressed: () => desktop.value = RemoteModel(connect: true))));
         }
       }
     });

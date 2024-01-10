@@ -120,7 +120,11 @@
   "copyCurl": "复制 cURL 请求",
   "delete": "删除",
   "rename": "重命名",
-  "repeat": "重放请求",
+  "repeat": "重放",
+  "customRepeat": "高级重放",
+  "repeatCount": "次数",
+  "repeatInterval": "间隔(ms)",
+  "repeatDelay": "延时(ms)",
   "editRequest": "编辑请求重放",
   "reSendRequest": "已重新发送请求",
 
@@ -218,5 +222,6 @@
   "enableScript": "启用脚本工具",
   "scriptUseDescribe": "使用 JavaScript 修改请求和响应",
   "scriptEdit": "编辑脚本",
-  "material3": "Material3是谷歌开源设计系统的最新版本"
+  "material3": "Material3是谷歌开源设计系统的最新版本",
+  "iosVpnBackgroundAudio": "开启抓包后，退出到后台。为了维护主UI线程的网络通信，将启用静音音频播放以保持主线程运行。否则，它将只在后台运行30秒。您同意在启用抓包后在后台播放音频吗?"
 }

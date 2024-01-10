@@ -2,7 +2,7 @@
 
 English | [中文](README.md)
 ## Open source free packet capture tool，Support Windows、Mac、Android、IOS、Linux Full platform system
-You can use it to intercept, inspect & rewrite HTTP(S) traffic, ProxyPin is based on Flutter, and the UI is beautiful
+You can use it to intercept, inspect & rewrite HTTP(S) traffic, ProxyPin is based on Flutter develop, and the UI is beautiful
 and easy to use.
 ## Features
 * Mobile scan code connection: no need to manually configure WiFi proxy, including configuration synchronization. All terminals can scan codes to connect and forward traffic to each other.
@@ -15,13 +15,11 @@ and easy to use.
 **Mac will prompt untrusted developers when first opened, you need to go to System Preferences-Security & Privacy-Allow any source.**
 Download： https://github.com/wanghongenpin/network_proxy_flutter/releases
 
-iOS AppStore ProxyPin： https://apps.apple.com/app/proxypin/id6450932949
-
-iOS TestFlight(Limited by quota)： https://testflight.apple.com/join/gURGH6B4
+iOS TestFlight Download APP(Limited by quota)： https://testflight.apple.com/join/gURGH6B4
 
 TG: https://t.me/proxypin_tg
 
-We will continue to improve the features and experience, as well as optimize the UI.
+**We will continue to improve the features and experience, as well as optimize the UI.**
 
 <img alt="image"  width="500px" height="400px" src="https://github.com/wanghongenpin/network-proxy-flutter/assets/24794200/67a2feb1-f1c3-4c0c-8737-5abe62c34794">.    <img alt="image"   height="500px" src="https://github.com/wanghongenpin/network_proxy_flutter/assets/24794200/1bb4b1ec-ec5c-44a7-add7-f0f94c8765b9">
 

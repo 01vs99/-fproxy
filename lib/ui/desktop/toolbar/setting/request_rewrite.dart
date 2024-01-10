@@ -184,6 +184,7 @@ class RequestRuleList extends StatefulWidget {
 class _RequestRuleListState extends State<RequestRuleList> {
   Map<int, bool> selected = {};
   late List<RequestRewriteRule> rules;
+  bool isPress = false;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -192,8 +193,6 @@ class _RequestRuleListState extends State<RequestRuleList> {
     super.initState();
     rules = widget.requestRewrites.rules;
   }
-
-  bool isPress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -488,8 +487,12 @@ class _RuleAddDialogState extends State<RuleAddDialog> {
               text: localizations.useGuide,
               style: const TextStyle(color: Colors.blue, fontSize: 14),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => DesktopMultiWindow.invokeMethod(0, "launchUrl",
-                    'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'))),
+                ..onTap = () => DesktopMultiWindow.invokeMethod(
+                    0,
+                    "launchUrl",
+                    isCN
+                        ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                        : 'https://github.com/wanghongenpin/network_proxy_flutter/wiki/Request-Rewrite'))),
         ]),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(

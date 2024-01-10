@@ -242,16 +242,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
               });
               return;
             }
-            var rule = widget.requestRewrites.rules[index];
-            var rewriteItems = await widget.requestRewrites.getRewriteItems(rule);
-            if (!mounted) return;
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => RewriteRule(rule: rule, items: rewriteItems)))
-                .then((value) {
-              if (value != null) {
-                setState(() {});
-              }
-            });
+            showEdit(index);
           },
           child: Container(
               color: selected.contains(index)
@@ -287,6 +278,20 @@ class _RequestRuleListState extends State<RequestRuleList> {
     });
   }
 
+  showEdit(int index) async {
+    var rule = widget.requestRewrites.rules[index];
+    var rewriteItems = await widget.requestRewrites.getRewriteItems(rule);
+    if (!mounted) return;
+
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => RewriteRule(rule: rule, items: rewriteItems)))
+        .then((value) {
+      if (value != null) {
+        setState(() {});
+      }
+    });
+  }
+
   //点击菜单
   showMenus(int index) {
     setState(() {
@@ -302,36 +307,20 @@ class _RequestRuleListState extends State<RequestRuleList> {
             BottomSheetItem(
                 text: localizations.multiple,
                 onPressed: () {
-                  setState(() {
-                    multiple = true;
-                  });
+                  setState(() => multiple = true);
                 }),
-            const Divider(thickness: 0.5),
-            BottomSheetItem(
-                text: localizations.edit,
-                onPressed: () async {
-                  var rule = widget.requestRewrites.rules[index];
-                  var rewriteItems = await widget.requestRewrites.getRewriteItems(rule);
-                  if (!mounted) return;
-
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (context) => RewriteRule(rule: rule, items: rewriteItems)))
-                      .then((value) {
-                    if (value != null) {
-                      setState(() {});
-                    }
-                  });
-                }),
-            const Divider(thickness: 0.5),
+            const Divider(thickness: 0.5, height: 5),
+            BottomSheetItem(text: localizations.edit, onPressed: () => showEdit(index)),
+            const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(text: localizations.share, onPressed: () => export([index])),
-            const Divider(thickness: 0.5, height: 1),
+            const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(
                 text: rules[index].enabled ? localizations.disabled : localizations.enable,
                 onPressed: () {
                   rules[index].enabled = !rules[index].enabled;
                   changed = true;
                 }),
-            const Divider(thickness: 0.5),
+            const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(
                 text: localizations.delete,
                 onPressed: () async {
@@ -363,7 +352,6 @@ class _RequestRuleListState extends State<RequestRuleList> {
   //导出js
   Future<void> export(List<int> indexes) async {
     if (indexes.isEmpty) return;
-
     String fileName = 'proxypin-rewrites.config';
 
     var list = [];
@@ -456,8 +444,9 @@ class _RewriteRuleState extends State<RewriteRule> {
               text: localizations.useGuide,
               style: const TextStyle(color: Colors.blue, fontSize: 14),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => launchUrl(Uri.parse(
-                    'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99')))),
+                ..onTap = () => launchUrl(Uri.parse(isCN
+                    ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                    : 'https://github.com/wanghongenpin/network_proxy_flutter/wiki/Request-Rewrite')))),
         ]),
         actions: [
           TextButton(

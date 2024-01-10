@@ -4,21 +4,24 @@ import NetworkExtension
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-      GeneratedPluginRegistrant.register(with: self)
+    
+    var backgroundAudioEnable: Bool = true
+    
+    override func application(_ application: UIApplication,
+                              didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        GeneratedPluginRegistrant.register(with: self)
 
-      let controller: FlutterViewController = window.rootViewController as! FlutterViewController ;
-      let batteryChannel = FlutterMethodChannel.init(name: "com.proxy/proxyVpn", binaryMessenger: controller as! FlutterBinaryMessenger);
-          batteryChannel.setMethodCallHandler({
-              (call: FlutterMethodCall, result: FlutterResult) -> Void in
-              if ("stopVpn" == call.method) {
-                  VpnManager.shared.disconnect()
-              } else {
-                  let arguments = call.arguments as? Dictionary<String, AnyObject>
-                  VpnManager.shared.connect(host: arguments?["proxyHost"] as? String ,port: arguments?["proxyPort"] as? Int)
+        let controller: FlutterViewController = window.rootViewController as! FlutterViewController ;
+        let batteryChannel = FlutterMethodChannel.init(name: "com.proxy/proxyVpn", binaryMessenger: controller as! FlutterBinaryMessenger);
+            batteryChannel.setMethodCallHandler({(call: FlutterMethodCall, result: FlutterResult) -> Void in
+                if ("stopVpn" == call.method) {
+                    VpnManager.shared.disconnect()
+                } else if ("isRunning" == call.method){
+                    result(Bool(VpnManager.shared.isRunning()))
+                } else {
+                    let arguments = call.arguments as? Dictionary<String, AnyObject>
+//                  self.backgroundAudioEnable = (arguments!["backgroundAudioEnable"]) as! Bool
+                    VpnManager.shared.connect(host: arguments?["proxyHost"] as? String ,port: arguments?["proxyPort"] as? Int)
               }
           })
 
@@ -26,17 +29,17 @@ import NetworkExtension
   }
 
     override func applicationWillTerminate(_ application: UIApplication) {
-      VpnManager.shared.disconnect()
+        VpnManager.shared.disconnect()
     }
 
-   var timer: Timer?
-   var bgTask: UIBackgroundTaskIdentifier?
-
+    var timer: Timer?
+    var bgTask: UIBackgroundTaskIdentifier?
 
     override func applicationDidEnterBackground(_ application: UIApplication) {
         if (!VpnManager.shared.isRunning()) {
             return
         }
+    
         timer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(timerAction), userInfo: nil, repeats: true)
         RunLoop.current.add(timer!, forMode: RunLoop.Mode.common)
                bgTask = application.beginBackgroundTask(expirationHandler: nil)
@@ -45,6 +48,7 @@ import NetworkExtension
     @objc func timerAction() {
         print(UIApplication.shared.backgroundTimeRemaining)
         let application = UIApplication.shared
+        
         if (bgTask != nil) {
             application.endBackgroundTask(bgTask!);
             bgTask = nil;
@@ -54,16 +58,30 @@ import NetworkExtension
             bgTask = application.beginBackgroundTask(expirationHandler: nil)
         }
             
-        if (application.backgroundTimeRemaining <= 0 || application.applicationState == .active) {
+        if (application.backgroundTimeRemaining <= 0 || application.applicationState == .active || AudioManager.shared.openBackgroundAudioAutoplay) {
             timer?.invalidate();
             timer = nil;
         }
-   
+        
+        if (application.backgroundTimeRemaining <= 10) {
+            self.backgroundAudio()
+        }
+
     }
 
     override func applicationWillResignActive(_ application: UIApplication) {
-        if (!VpnManager.shared.isRunning()) {
+        self.backgroundAudio();
+    }
+    override  func applicationDidBecomeActive(_ application: UIApplication) {
+        self.endBackgroundUpdateTask()
+    }
+    
+    private func backgroundAudio() {
+        if (!VpnManager.shared.isRunning() || !self.backgroundAudioEnable) {
             return
+        }
+        if (AudioManager.shared.openBackgroundAudioAutoplay) {
+            return;
         }
         
         AudioManager.shared.openBackgroundAudioAutoplay = true
@@ -71,16 +89,14 @@ import NetworkExtension
             self.endBackgroundUpdateTask()
         })
     }
-    override  func applicationDidBecomeActive(_ application: UIApplication) {
-        self.endBackgroundUpdateTask()
-    }
     
     var backgroundUpdateTask: UIBackgroundTaskIdentifier = UIBackgroundTaskIdentifier(rawValue: 0)
+    
     func endBackgroundUpdateTask() {
-        if (!VpnManager.shared.isRunning()) {
+        if (!VpnManager.shared.isRunning() || !AudioManager.shared.openBackgroundAudioAutoplay) {
             return
         }
-        
+
         AudioManager.shared.openBackgroundAudioAutoplay = false
         UIApplication.shared.endBackgroundTask(self.backgroundUpdateTask)
         self.backgroundUpdateTask = UIBackgroundTaskIdentifier.invalid

@@ -9,7 +9,8 @@ import 'package:network_proxy/network/host_port.dart';
 import 'package:network_proxy/network/http/codec.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/util/file_read.dart';
+import 'package:network_proxy/network/util/crts.dart';
+import 'package:network_proxy/network/util/localizations.dart';
 
 import 'components/host_filter.dart';
 
@@ -51,14 +52,15 @@ class ProxyHelper {
     response.headers.set("Content-Disposition", 'inline;filename=ProxyPinCA.crt');
     response.headers.set("Connection", 'close');
 
-    var body = await FileRead.read('assets/certs/ca.crt');
-    response.headers.set("Content-Length", body.lengthInBytes.toString());
+    var caFile = await CertificateManager.certificateFile();
+    var caBytes = await caFile.readAsBytes();
+    response.headers.set("Content-Length", caBytes.lengthInBytes.toString());
 
     if (request.method == HttpMethod.head) {
       channel.writeAndClose(response);
       return;
     }
-    response.body = body.buffer.asUint8List();
+    response.body = caBytes;
     channel.writeAndClose(response);
   }
 
@@ -71,7 +73,8 @@ class ProxyHelper {
     String message = error.toString();
     HttpStatus status = HttpStatus(-1, message);
     if (error is HandshakeException) {
-      status = HttpStatus(-2, 'SSL握手失败');
+      status = HttpStatus(
+          -2, Localizations.isEN ? 'SSL handshake failed, please check the certificate' : 'SSL握手失败,请检查证书安装是否正确');
     } else if (error is ParserException) {
       status = HttpStatus(-3, error.message);
     } else if (error is SocketException) {

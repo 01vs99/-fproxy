@@ -4,9 +4,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
+import 'package:network_proxy/network/util/x509/extension.dart';
+import 'package:network_proxy/network/util/x509/key_usage.dart' as x509;
 import 'package:pointycastle/asn1/unsupported_object_identifier_exception.dart';
 import 'package:pointycastle/pointycastle.dart';
 
+import 'basic_constraints.dart';
 
 /// @author wanghongen
 /// 2023/7/26
@@ -39,6 +42,9 @@ class X509Generate {
     String serialNumber = '1',
     Map<String, String>? issuer,
     Map<String, String>? subject,
+    x509.KeyUsage? keyUsage,
+    List<ExtendedKeyUsage>? extKeyUsage,
+    BasicConstraints? basicConstraints,
   }) {
     var data = ASN1Sequence();
 
@@ -85,20 +91,53 @@ class X509Generate {
 
     // Add Public Key
     data.add(_makePublicKeyBlock(publicKey));
+
     // Add Extensions
-    if (IterableUtils.isNotNullOrEmpty(sans)) {
+
+    if (IterableUtils.isNotNullOrEmpty(sans) || keyUsage != null || IterableUtils.isNotNullOrEmpty(extKeyUsage)) {
       var extensionTopSequence = ASN1Sequence();
 
-      var sanList = ASN1Sequence();
-      for (var s in sans!) {
-        sanList.add(ASN1PrintableString(stringValue: s, tag: 0x82));
+      // Add basic constraints 2.5.29.19
+      if (basicConstraints != null) {
+        var basicConstraintsValue = ASN1Sequence();
+        basicConstraintsValue.add(ASN1Boolean(basicConstraints.isCA));
+        if (basicConstraints.pathLenConstraint != null) {
+          basicConstraintsValue.add(ASN1Integer(BigInt.from(basicConstraints.pathLenConstraint!)));
+        }
+        var octetString = ASN1OctetString(octets: basicConstraintsValue.encode());
+        var basicConstraintsSequence = ASN1Sequence();
+        basicConstraintsSequence.add(Extension.basicConstraints);
+        if (basicConstraints.critical) {
+          basicConstraintsSequence.add(ASN1Boolean(true));
+        }
+        basicConstraintsSequence.add(octetString);
+        extensionTopSequence.add(basicConstraintsSequence);
       }
-      var octetString = ASN1OctetString(octets: sanList.encode());
 
-      var sanSequence = ASN1Sequence();
-      sanSequence.add(ASN1ObjectIdentifier.fromIdentifierString('2.5.29.17'));
-      sanSequence.add(octetString);
-      extensionTopSequence.add(sanSequence);
+      // Add key usage  2.5.29.15
+      if (keyUsage != null) {
+        extensionTopSequence.add(keyUsageSequence(keyUsage)!);
+      }
+
+      //2.5.29.17
+      if (IterableUtils.isNotNullOrEmpty(sans)) {
+        var sanList = ASN1Sequence();
+        for (var s in sans!) {
+          sanList.add(ASN1PrintableString(stringValue: s, tag: 0x82));
+        }
+        var octetString = ASN1OctetString(octets: sanList.encode());
+
+        var sanSequence = ASN1Sequence();
+        sanSequence.add(Extension.subjectAlternativeName);
+        sanSequence.add(octetString);
+        extensionTopSequence.add(sanSequence);
+      }
+
+      // Add ext key usage 2.5.29.37
+      var extKeyUsageSequence = extendedKeyUsageEncodings(extKeyUsage);
+      if (extKeyUsageSequence != null) {
+        extensionTopSequence.add(extKeyUsageSequence);
+      }
 
       var extObj = ASN1Object(tag: 0xA3);
       extObj.valueBytes = extensionTopSequence.encode();
@@ -115,6 +154,61 @@ class X509Generate {
     var chunks = StringUtils.chunk(base64Encode(outer.encode()), 64);
 
     return '$BEGIN_CERT\n${chunks.join('\r\n')}\n$END_CERT';
+  }
+
+  static ASN1Sequence? keyUsageSequence(x509.KeyUsage keyUsages) {
+    var octetString = ASN1OctetString(octets: keyUsages.bitString.encode());
+
+    var keyUsageSequence = ASN1Sequence();
+    keyUsageSequence.add(Extension.keyUsage);
+    if (keyUsages.critical) {
+      keyUsageSequence.add(ASN1Boolean(true));
+    }
+    keyUsageSequence.add(octetString);
+
+    return keyUsageSequence;
+  }
+
+  static ASN1Sequence? extendedKeyUsageEncodings(List<ExtendedKeyUsage>? extKeyUsage) {
+    if (IterableUtils.isNullOrEmpty(extKeyUsage)) {
+      return null;
+    }
+    var extKeyUsageList = ASN1Sequence();
+    for (var s in extKeyUsage!) {
+      var oi = <int>[];
+      switch (s) {
+        case ExtendedKeyUsage.SERVER_AUTH:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 1];
+          break;
+        case ExtendedKeyUsage.CLIENT_AUTH:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 2];
+          break;
+        case ExtendedKeyUsage.CODE_SIGNING:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 3];
+          break;
+        case ExtendedKeyUsage.EMAIL_PROTECTION:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 4];
+          break;
+        case ExtendedKeyUsage.TIME_STAMPING:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 8];
+          break;
+        case ExtendedKeyUsage.OCSP_SIGNING:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 9];
+          break;
+        case ExtendedKeyUsage.BIMI:
+          oi = [1, 3, 6, 1, 5, 5, 7, 3, 31];
+          break;
+      }
+
+      extKeyUsageList.add(ASN1ObjectIdentifier(oi));
+    }
+
+    var octetString = ASN1OctetString(octets: extKeyUsageList.encode());
+
+    var extKeyUsageSequence = ASN1Sequence();
+    extKeyUsageSequence.add(Extension.extendedKeyUsage);
+    extKeyUsageSequence.add(octetString);
+    return extKeyUsageSequence;
   }
 
   static ASN1Set _identifier(String k, String value) {
@@ -134,8 +228,9 @@ class X509Generate {
     }
 
     var innerSequence = ASN1Sequence(elements: [oIdentifier, pString]);
-    return  ASN1Set(elements: [innerSequence]);
+    return ASN1Set(elements: [innerSequence]);
   }
+
   static Uint8List _rsaSign(Uint8List inBytes, RSAPrivateKey privateKey, String signingAlgorithm) {
     var signer = Signer('$signingAlgorithm/RSA');
     signer.init(true, PrivateKeyParameter<RSAPrivateKey>(privateKey));

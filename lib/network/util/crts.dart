@@ -17,10 +17,13 @@
 import 'dart:core';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
-import 'package:network_proxy/network/util/x509.dart';
+import 'package:network_proxy/network/util/x509/basic_constraints.dart';
+import 'package:network_proxy/network/util/x509/x509.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:network_proxy/network/util/x509/key_usage.dart' as x509;
 
 import 'file_read.dart';
 
@@ -38,7 +41,7 @@ class CertificateManager {
   static final Map<String, String> _certificateMap = {};
 
   /// 服务端密钥
-  static final AsymmetricKeyPair _serverKeyPair = CryptoUtils.generateRSAKeyPair();
+  static AsymmetricKeyPair _serverKeyPair = CryptoUtils.generateRSAKeyPair();
 
   /// ca证书
   static late X509CertificateData _caCert;
@@ -118,7 +121,18 @@ class CertificateManager {
     };
     x509Subject['CN'] = 'ProxyPin CA (${Platform.localHostname})';
 
-    var csrPem = generate(_caCert, serverPubKey, serverPriKey, 'ProxyPin CA (${Platform.localHostname})');
+    var csrPem = X509Generate.generateSelfSignedCertificate(
+      _caCert,
+      serverPubKey,
+      serverPriKey,
+      825,
+      sans: [x509Subject['CN']!],
+      serialNumber: Random().nextInt(1000000).toString(),
+      subject: x509Subject,
+      keyUsage: x509.KeyUsage(x509.KeyUsage.keyCertSign | x509.KeyUsage.cRLSign),
+      extKeyUsage: [ExtendedKeyUsage.SERVER_AUTH, ExtendedKeyUsage.CLIENT_AUTH],
+      basicConstraints: BasicConstraints(isCA: true),
+    );
 
     //重新写入根证书
     var caFile = await certificateFile();
@@ -147,6 +161,8 @@ class CertificateManager {
     if (_initialized) {
       return;
     }
+    _serverKeyPair = CryptoUtils.generateRSAKeyPair();
+
     //从项目目录加入ca根证书
     var caPemFile = await certificateFile();
     _caCert = X509Utils.x509CertificateFromPem(await caPemFile.readAsString());
@@ -181,5 +197,12 @@ class CertificateManager {
     }
 
     return caFile;
+  }
+
+  ///生成 p12文件
+  static Future<Uint8List> generatePkcs12(String? password) async {
+    var caFile = await CertificateManager.certificateFile();
+    var keyFile = await CertificateManager.privateKeyFile();
+    return Pkcs12Utils.generatePkcs12(await keyFile.readAsString(), [await caFile.readAsString()], password: password);
   }
 }

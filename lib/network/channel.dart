@@ -309,10 +309,12 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
       Channel? remoteChannel = channelContext.getAttribute(channel.id);
 
       //大body 不解析直接转发
-      if (buffer.length > Codec.maxBodyLength) {
+      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler) {
+        logger.w("[$channel] forward large body");
         relay(channel, remoteChannel!);
-        handler.channelRead(channelContext, channel, buffer.bytes);
+        var body = buffer.bytes;
         buffer.clear();
+        handler.channelRead(channelContext, channel, body);
         return;
       }
 

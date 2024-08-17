@@ -314,9 +314,9 @@ async function onResponse(context, request, response) {
     map['queries']?.forEach((key, value) {
       query += '$key=$value&';
     });
-    query = query.isEmpty ? query : '?${query.substring(0, query.length - 1)}';
 
-    request.uri = Uri.parse('${request.remoteDomain()}${map['path']}$query').toString();
+    var requestUri = request.requestUri!.replace(path: map['path'], query: query);
+    request.uri = requestUri.path + (requestUri.hasQuery ? '?${requestUri.query}' : '');
 
     map['headers'].forEach((key, value) {
       if (value is List) {

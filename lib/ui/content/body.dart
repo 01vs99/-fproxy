@@ -78,6 +78,10 @@ class HttpBodyState extends State<HttpBodyWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.httpMessage == null) {
+      return const SizedBox();
+    }
+
     if ((widget.httpMessage?.body == null || widget.httpMessage?.body?.isEmpty == true) &&
         widget.httpMessage?.messages.isNotEmpty == false) {
       return const SizedBox();
@@ -85,7 +89,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
 
     var tabs = Tabs.of(widget.httpMessage?.contentType, isJsonText());
 
-    if (tabIndex >= tabs.list.length) tabIndex = tabs.list.length - 1;
+    if (tabIndex > 0 && tabIndex >= tabs.list.length) tabIndex = tabs.list.length - 1;
     bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[tabIndex]);
 
     List<Widget> list = [
@@ -356,7 +360,7 @@ class _BodyState extends State<_Body> {
         return SelectableText(Uri.decodeFull(message!.bodyAsString), contextMenuBuilder: contextMenu);
       }
       if (type == ViewType.image) {
-        return Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.none);
+        return Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown);
       }
       if (type == ViewType.video) {
         return const Center(child: Text("video not support preview"));

@@ -26,7 +26,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV10 = true;
+  bool upgradeNoticeV12 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(true);
@@ -37,13 +37,14 @@ class AppConfiguration {
   /// header默认展示
   bool headerExpanded = true;
 
-  bool? iosVpnBackgroundAudioEnable;
-
   //桌面window大小
   Size? windowSize;
 
   //桌面window位置
   Offset? windowPosition;
+
+  //左侧面板占比
+  double panelRatio = 0.3;
 
   AppConfiguration._();
 
@@ -123,25 +124,33 @@ class AppConfiguration {
       var mode =
           ThemeMode.values.firstWhere((element) => element.name == config['mode'], orElse: () => ThemeMode.system);
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
-      upgradeNoticeV10 = config['upgradeNoticeV10'] ?? true;
+      upgradeNoticeV12 = config['upgradeNoticeV12'] ?? true;
       _language = config['language'] == null ? null : Locale.fromSubtags(languageCode: config['language']);
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerExpanded = config['headerExpanded'] ?? true;
-      iosVpnBackgroundAudioEnable = config['iosVpnBackgroundAudioEnable'];
 
       windowSize =
           config['windowSize'] == null ? null : Size(config['windowSize']['width'], config['windowSize']['height']);
       windowPosition = config['windowPosition'] == null
           ? null
           : Offset(config['windowPosition']['dx'], config['windowPosition']['dy']);
+      if (config['panelRatio'] != null) {
+        panelRatio = config['panelRatio'];
+      }
     } catch (e) {
       print(e);
     }
   }
 
+  /// 是否正在写入
+  bool _isWriting = false;
+
   /// 刷新配置文件
   flushConfig() async {
+    if (_isWriting) return;
+    _isWriting = true;
+
     var file = await _path;
     var exists = await file.exists();
     if (!exists) {
@@ -149,21 +158,26 @@ class AppConfiguration {
     }
 
     var json = jsonEncode(toJson());
-    file.writeAsString(json);
+    await file.writeAsString(json);
+    _isWriting = false;
   }
 
   Map<String, dynamic> toJson() {
     return {
       'mode': _theme.mode.name,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV10': upgradeNoticeV10,
+      'upgradeNoticeV12': upgradeNoticeV12,
       "language": _language?.languageCode,
-      'pipEnabled': pipEnabled.value,
-      'pipIcon': pipIcon.value ? true : null,
       "headerExpanded": headerExpanded,
-      "windowSize": windowSize == null ? null : {"width": windowSize?.width, "height": windowSize?.height},
-      "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
-      "iosVpnBackgroundAudioEnable": iosVpnBackgroundAudioEnable == false ? null : iosVpnBackgroundAudioEnable
+
+      if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
+      if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,
+
+      if (Platforms.isDesktop())
+        "windowSize": windowSize == null ? null : {"width": windowSize?.width, "height": windowSize?.height},
+      if (Platforms.isDesktop())
+        "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
+      if (Platforms.isDesktop()) 'panelRatio': panelRatio,
     };
   }
 }

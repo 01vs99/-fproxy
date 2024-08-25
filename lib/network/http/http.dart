@@ -131,7 +131,7 @@ class HttpRequest extends HttpMessage {
     }
   }
 
-  String? path() {
+  String path() {
     try {
       var requestPath = Uri.parse(requestUrl).path;
       return requestPath.isEmpty ? "/" : requestPath;
@@ -152,7 +152,9 @@ class HttpRequest extends HttpMessage {
   HttpRequest copy({String? uri}) {
     var request = HttpRequest(method, uri ?? this.uri, protocolVersion: protocolVersion);
     request.headers.addAll(headers);
-    request.hostAndPort = uri == null ? hostAndPort : HostAndPort.of(uri);
+    if (uri != null && !uri.startsWith('/')) {
+      request.hostAndPort = HostAndPort.of(uri);
+    }
     request.body = body;
     return request;
   }

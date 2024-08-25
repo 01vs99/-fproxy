@@ -131,7 +131,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
       }
     });
 
-    if (widget.appConfiguration.upgradeNoticeV10) {
+    if (widget.appConfiguration.upgradeNoticeV12) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -170,7 +170,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
         child: Scaffold(
             floatingActionButton: PictureInPictureIcon(proxyServer),
             body: Scaffold(
-              appBar: appBar(),
+              appBar: PreferredSize(preferredSize: const Size.fromHeight(42), child: appBar()),
               drawer: DrawerWidget(proxyServer: proxyServer, container: container),
               floatingActionButton: _launchActionButton(),
               body: ValueListenableBuilder(
@@ -207,6 +207,11 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
               startup: proxyServer.configuration.startup,
               serverLaunch: false,
               onStart: () async {
+                //ios端口可能会被系统杀掉
+                if (Platform.isIOS) {
+                  await proxyServer.restart();
+                }
+
                 Vpn.startVpn(
                     Platform.isAndroid ? await localIp() : "127.0.0.1", proxyServer.port, proxyServer.configuration);
               },
@@ -219,22 +224,26 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 支持导入自定义跟证书，以及生成自定义根证书；\n'
-            '2. 支持重新生成根证书，以及重置默认跟证书；\n'
-            '3. 支持导出根证书(P12)和私钥；\n'
-            '4. 重放域名下请求；\n'
-            '5. 修复请求重写列表换行问题；\n'
-            '6. 脚本headers支持同名多个值情况；\n'
+            '1. 桌面端增加全部请求列表；\n'
+            '2. iOS 通知栏显示VPN状态；\n'
+            '3. iOS修复停止长时间切换后台再开启抓包无网络问题；\n'
+            '4. 桌面端保存调整左右面板比例；\n'
+            '5. 手机端请求列表增加滚动条；\n'
+            '6. 修复请求重发和脚本导致URL错误；\n'
+            '7. 修复脚本二进制body转换问题；\n'
+            '8. 修复请求编辑中文路径编码问题；\n'
         : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n\n'
             'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-            '1. Support importing custom certificates and generating custom root certificates；\n'
-            '2. Support generate new root certificates and resetting default  root certificates；\n'
-            '3. Support exporting root certificates(P12) and private keys；\n'
-            '4. Replay domain name request；\n'
-            '5. Fix request rewrite list word wrapping；\n'
-            '6. Script headers support multiple values with the same name；\n';
-    showAlertDialog(isCN ? '更新内容V1.1.1' : "Update content V1.1.1", content, () {
-      widget.appConfiguration.upgradeNoticeV10 = false;
+            '1. Desktop: Add all requests list；\n'
+            '2. iOS notification bar displays VPN status；\n'
+            '3. iOS fix: Stop switching to the background for a long time and then start packet capture without network problem；\n'
+            '4. Desktop: save the left and right panel ratio；\n'
+            '5. Mobile：Add a scrollbar to the request list；\n'
+            '6. fix request repeat & script change url wrong；\n'
+            '7. fix script binary body convert；\n'
+            '';
+    showAlertDialog(isCN ? '更新内容V1.1.2' : "Update content V1.1.2", content, () {
+      widget.appConfiguration.upgradeNoticeV12 = false;
       widget.appConfiguration.flushConfig();
     });
   }
@@ -270,7 +279,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                     child: Text(localizations.cancel))
               ],
               title: Text(title, style: const TextStyle(fontSize: 18)),
-              content: Text(content));
+              content: SelectableText(content));
         });
   }
 

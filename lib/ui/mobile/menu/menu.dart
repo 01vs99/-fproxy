@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 WangHongEn
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import 'dart:io';
 
 import 'package:date_format/date_format.dart';
@@ -9,6 +24,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:network_proxy/native/vpn.dart';
 import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/http_client.dart';
+import 'package:network_proxy/network/util/logger.dart';
 import 'package:network_proxy/ui/mobile/mobile.dart';
 import 'package:network_proxy/ui/mobile/setting/app_filter.dart';
 import 'package:network_proxy/ui/mobile/setting/ssl.dart';
@@ -73,7 +89,7 @@ class MoreMenu extends StatelessWidget {
                 title: Text(localizations.myQRCode),
                 onTap: () async {
                   Navigator.maybePop(context);
-                  var ip = await localIp();
+                  var ip = await localIp(readCache: false);
                   if (context.mounted) {
                     connectQrCode(context, ip, proxyServer.port);
                   }
@@ -157,7 +173,7 @@ class MoreMenu extends StatelessWidget {
           }
         }
       } catch (e) {
-        print(e);
+        logger.e(e);
         if (context.mounted) {
           showDialog(
               context: context,
@@ -185,7 +201,7 @@ class MoreMenu extends StatelessWidget {
             actionsPadding: const EdgeInsets.only(bottom: 5),
             title: Text(localizations.remoteConnectForward, style: const TextStyle(fontSize: 16)),
             content: SizedBox(
-                height: 240,
+                height: 260,
                 width: 300,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -196,7 +212,16 @@ class MoreMenu extends StatelessWidget {
                       version: QrVersions.auto,
                       size: 200.0,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('${localizations.localIP}:'),
+                        const SizedBox(width: 5),
+                        SelectableText('$host:$port'),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     Text(localizations.mobileScan),
                   ],
                 )),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023 WangHongEn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,7 +294,6 @@ class LinuxSystemProxy extends SystemProxy {
       return Future.wait([hostFuture, portFuture]).then((value) {
         var host = Strings.trimWrap(value[0], "'");
         var port = Strings.trimWrap(value[1], "'");
-        print("$host:$port");
         if (host.isNotEmpty && port.isNotEmpty) {
           return ProxyInfo.of(host, int.parse(port));
         }

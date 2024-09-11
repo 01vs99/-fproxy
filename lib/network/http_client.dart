@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023 WangHongEn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 
 import 'dart:async';
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:network_proxy/network/host_port.dart';
 import 'package:network_proxy/network/http/http.dart';
+import 'package:network_proxy/network/http/http_headers.dart';
 import 'package:network_proxy/network/network.dart';
 import 'package:network_proxy/network/util/system_proxy.dart';
 import 'package:proxy_manager/proxy_manager.dart';
@@ -51,7 +52,7 @@ class HttpClients {
     var channel = await client.connect(connectHost, channelContext);
 
     if (proxyInfo != null && hostAndPort.isSsl()) {
-      await connectRequest(hostAndPort, channel);
+      await connectRequest(hostAndPort, channel, proxyInfo: proxyInfo);
     }
 
     if (hostAndPort.isSsl()) {
@@ -62,14 +63,20 @@ class HttpClients {
   }
 
   ///发起代理连接请求
-  static Future<Channel> connectRequest(HostAndPort hostAndPort, Channel channel) async {
+  static Future<Channel> connectRequest(HostAndPort hostAndPort, Channel channel, {ProxyInfo? proxyInfo}) async {
     ChannelHandler handler = channel.pipeline.handler;
     //代理 发送connect请求
     var httpResponseHandler = HttpResponseHandler();
     channel.pipeline.handler = httpResponseHandler;
 
     HttpRequest proxyRequest = HttpRequest(HttpMethod.connect, '${hostAndPort.host}:${hostAndPort.port}');
-    proxyRequest.headers.set(HttpHeaders.hostHeader, '${hostAndPort.host}:${hostAndPort.port}');
+    proxyRequest.headers.set(HttpHeaders.HOST, '${hostAndPort.host}:${hostAndPort.port}');
+
+    //proxy Authorization
+    if (proxyInfo?.isAuthenticated == true) {
+      String auth = base64Encode(utf8.encode("${proxyInfo?.username}:${proxyInfo?.password}"));
+      proxyRequest.headers.set(HttpHeaders.PROXY_AUTHORIZATION, 'Basic $auth');
+    }
 
     await channel.write(proxyRequest);
     var response = await httpResponseHandler.getResponse(const Duration(seconds: 5));
@@ -131,7 +138,8 @@ class HttpClients {
     var httpResponseHandler = HttpResponseHandler();
     request.hostAndPort ??= HostAndPort.of(request.requestUrl);
 
-    Channel channel = await proxyConnect(proxyInfo: proxyInfo, request.hostAndPort!, httpResponseHandler, channelContext);
+    Channel channel =
+        await proxyConnect(proxyInfo: proxyInfo, request.hostAndPort!, httpResponseHandler, channelContext);
 
     if (channel.isSsl && !request.uri.startsWith("/")) {
       Uri? uri = request.requestUri;

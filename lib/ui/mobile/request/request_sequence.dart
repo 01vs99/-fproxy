@@ -9,6 +9,7 @@ import 'package:network_proxy/ui/mobile/widgets/highlight.dart';
 import 'package:network_proxy/utils/listenable_list.dart';
 
 ///请求序列 列表
+///@author wanghongen
 class RequestSequence extends StatefulWidget {
   final ListenableList<HttpRequest> container;
   final ProxyServer proxyServer;
@@ -25,9 +26,6 @@ class RequestSequence extends StatefulWidget {
 }
 
 class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliveClientMixin {
-  // Define a ScrollController
-  final ScrollController _scrollController = ScrollController();
-
   ///请求和对应的row的映射
   Map<HttpRequest, GlobalKey<RequestRowState>> indexes = HashMap();
 
@@ -57,7 +55,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   @override
   dispose() {
     KeywordHighlight.keywordsController.removeListener(highlightListener);
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -138,9 +135,9 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     super.build(context);
 
     return Scrollbar(
-        controller: _scrollController,
+        controller: PrimaryScrollController.maybeOf(context),
         child: ListView.separated(
-            controller: _scrollController,
+            controller: PrimaryScrollController.maybeOf(context),
             cacheExtent: 1000,
             separatorBuilder: (context, index) =>
                 Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
@@ -161,5 +158,10 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                     widget.onRemove?.call([request]);
                   });
             }));
+  }
+
+  scrollToTop() {
+    PrimaryScrollController.maybeOf(context)
+        ?.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
   }
 }

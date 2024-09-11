@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023 WangHongEn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import 'package:network_proxy/utils/lang.dart';
 import 'handler.dart';
 
 ///处理I/O事件或截获I/O操作
+///[T] 读取的数据类型
+///@author wanghongen
 abstract class ChannelHandler<T> {
   var log = logger;
 
@@ -286,7 +288,13 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
     var clientChannel = channelContext.clientChannel!;
     Channel? remoteChannel =
         channelContext.serverChannel ?? await channelContext.connectServerChannel(remote, RelayHandler(clientChannel));
+    ProxyInfo? proxyInfo = channelContext.getAttribute(AttributeKeys.proxyInfo);
     if (clientChannel.isSsl && !remoteChannel.isSsl) {
+      //代理认证
+      if (proxyInfo?.isAuthenticated == true) {
+        await HttpClients.connectRequest(remote, remoteChannel, proxyInfo: proxyInfo);
+      }
+
       await remoteChannel.secureSocket(channelContext, host: channelContext.getAttribute(AttributeKeys.domain));
     }
 

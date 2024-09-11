@@ -4,45 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/host_port.dart';
 import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/setting.dart';
-
-class ProxySetting extends StatefulWidget {
-  final ProxyServer proxyServer;
-
-  const ProxySetting({super.key, required this.proxyServer});
-
-  @override
-  State<StatefulWidget> createState() {
-    return _ProxySettingState();
-  }
-}
-
-class _ProxySettingState extends State<ProxySetting> {
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: Text(localizations.proxySetting, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
-      body: ListView(children: [
-        PortWidget(proxyServer: widget.proxyServer),
-        const Divider(height: 20, thickness: 0.3),
-        ListTile(
-          title: Text(localizations.externalProxy),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () {
-            showDialog(
-                context: context, builder: (_) => ExternalProxyDialog(configuration: widget.proxyServer.configuration));
-          },
-        ),
-      ]),
-    );
-  }
-}
 
 class ExternalProxyDialog extends StatefulWidget {
   final Configuration configuration;
@@ -72,6 +35,9 @@ class _ExternalProxyDialogState extends State<ExternalProxyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+
+
     return AlertDialog(
         scrollable: true,
         title: Text(localizations.externalProxy, style: const TextStyle(fontSize: 15)),
@@ -88,7 +54,7 @@ class _ExternalProxyDialogState extends State<ExternalProxyDialog> {
         ],
         content: Form(
             key: formKey,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
               const SizedBox(height: 10),
               Row(children: [
                 Expanded(flex: 2, child: Text("${localizations.enable}：")),
@@ -112,29 +78,82 @@ class _ExternalProxyDialogState extends State<ExternalProxyDialog> {
                   },
                 ))
               ]),
-              Row(children: [
-                const Text("Host："),
-                Expanded(
-                    child: TextFormField(
-                  initialValue: externalProxy.host,
-                  validator: (val) => val == null || val.isEmpty ? localizations.cannotBeEmpty : null,
-                  onChanged: (val) => externalProxy.host = val,
-                ))
-              ]),
-              Row(children: [
-                const Text("Port："),
-                Expanded(
-                    child: TextFormField(
-                  initialValue: externalProxy.port?.toString() ?? '',
-                  inputFormatters: <TextInputFormatter>[
-                    LengthLimitingTextInputFormatter(5),
-                    FilteringTextInputFormatter.allow(RegExp("[0-9]"))
-                  ],
-                  onChanged: (val) => externalProxy.port = int.parse(val),
-                  validator: (val) => val == null || val.isEmpty ? localizations.cannotBeEmpty : null,
-                  decoration: const InputDecoration(),
-                ))
-              ]),
+              const SizedBox(height: 3),
+              Text(localizations.externalProxyServer, style: const TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 10),
+              SizedBox(
+                  height: 36,
+                  child: Row(children: [
+                    Expanded(
+                        child: TextFormField(
+                      initialValue: externalProxy.host,
+                      validator: (val) => val == null || val.isEmpty ? localizations.cannotBeEmpty : null,
+                      onChanged: (val) => externalProxy.host = val,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                        hintText: 'Host',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: OutlineInputBorder(),
+                      ),
+                    )),
+                    const SizedBox(child: Text(' : ', style: TextStyle(fontSize: 22))),
+                    SizedBox(
+                        width: 68,
+                        child: TextFormField(
+                          initialValue: externalProxy.port?.toString() ?? '',
+                          inputFormatters: <TextInputFormatter>[
+                            LengthLimitingTextInputFormatter(5),
+                            FilteringTextInputFormatter.allow(RegExp("[0-9]"))
+                          ],
+                          onChanged: (val) => externalProxy.port = int.parse(val),
+                          validator: (val) => val == null || val.isEmpty ? localizations.cannotBeEmpty : null,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            hintText: 'Port',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(),
+                          ),
+                        ))
+                  ])),
+
+              //认证
+              const SizedBox(height: 15),
+              Text(localizations.externalProxyAuth, style: const TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 10),
+              SizedBox(
+                  height: 36,
+                  child: Row(children: [
+                    SizedBox(
+                        width: isCN ? 65 : 85,
+                        child: Text('${localizations.username}：', style: const TextStyle(fontWeight: FontWeight.w300))),
+                    Expanded(
+                        child: TextFormField(
+                          initialValue: externalProxy.username,
+                          onChanged: (val) => externalProxy.username = val,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            border: OutlineInputBorder(),
+                          ),
+                        ))
+                  ])),
+              const SizedBox(height: 10),
+
+              SizedBox(
+                  height: 36,
+                  child: Row(children: [
+                    SizedBox(
+                        width: isCN ? 65 : 85,
+                        child: Text('${localizations.password}：', style: const TextStyle(fontWeight: FontWeight.w300))),
+                    Expanded(
+                        child: TextFormField(
+                          initialValue: externalProxy.password,
+                          onChanged: (val) => externalProxy.password = val,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            border: OutlineInputBorder(),
+                          ),
+                        ))
+                  ])),
             ])));
   }
 

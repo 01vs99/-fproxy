@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023 WangHongEn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,15 +111,23 @@ class ProxyInfo {
   String host = '127.0.0.1';
   int? port;
 
+  //authorization
+  String? username;
+  String? password;
+
   ProxyInfo();
 
   ProxyInfo.of(this.host, this.port) : enabled = true;
+
+  bool get isAuthenticated => username?.isNotEmpty == true;
 
   ProxyInfo.fromJson(Map<String, dynamic> json) {
     enabled = json['enabled'] == true;
     capturePacket = json['capturePacket'] ?? true;
     host = json['host'];
     port = json['port'];
+    username = json['username'];
+    password = json['password'];
   }
 
   Map<String, dynamic> toJson() {
@@ -128,11 +136,13 @@ class ProxyInfo {
       'capturePacket': capturePacket,
       'host': host,
       'port': port,
+      'username': username,
+      'password': password,
     };
   }
 
   @override
   String toString() {
-    return 'ProxyInfo{enabled: $enabled, capturePacket: $capturePacket, host: $host, port: $port}';
+    return 'ProxyInfo{enabled: $enabled, capturePacket: $capturePacket, host: $host, port: $port, username: $username, password: $password}';
   }
 }

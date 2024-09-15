@@ -114,7 +114,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     //实现抓包代理转发
     if (httpRequest.method != HttpMethod.connect) {
-      log.i("[${channel.id}] ${httpRequest.method.name} ${httpRequest.requestUrl}");
+      log.d("[${channel.id}] ${httpRequest.method.name} ${httpRequest.requestUrl}");
       if (HostFilter.filter(httpRequest.hostAndPort?.host)) {
         await remoteChannel.write(httpRequest);
         return;
@@ -328,8 +328,12 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
   @override
   void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) {
     proxyChannel.write(msg);
-
-    var frame = decoder.decode(msg);
+    WebSocketFrame? frame;
+    try {
+      frame = decoder.decode(msg);
+    } catch (e) {
+      log.e("websocket decode error", error: e);
+    }
     if (frame == null) {
       return;
     }

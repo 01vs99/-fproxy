@@ -53,7 +53,8 @@ abstract class HttpMessage {
   int? packageSize;
 
   List<int>? body;
-  String? remoteAddress;
+  String? remoteHost;
+  int? remotePort;
 
   String requestId = (DateTime.now().millisecondsSinceEpoch + Random().nextInt(99999)).toRadixString(36);
   int? streamId; // http2 streamId
@@ -127,9 +128,9 @@ class HttpRequest extends HttpMessage {
   HttpRequest(this.method, this.uri, {String protocolVersion = "HTTP/1.1"}) : super(protocolVersion);
 
   String? remoteDomain() {
-    if (hostAndPort == null && !uri.startsWith("/")) {
+    if (hostAndPort == null && (!uri.startsWith("/") && uri.isNotEmpty)) {
       try {
-        var uri = Uri.parse(requestUrl);
+        var uri = Uri.parse(this.uri);
         return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
       } catch (e) {
         return null;
@@ -138,7 +139,7 @@ class HttpRequest extends HttpMessage {
     return hostAndPort?.domain;
   }
 
-  String get requestUrl => uri.startsWith("/") ? '${remoteDomain()}$uri' : uri;
+  String get requestUrl => uri.startsWith("/") || uri.isEmpty ? '${remoteDomain()}$uri' : uri;
 
   /// 请求的uri
   Uri? get requestUri {

@@ -276,15 +276,8 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
     handler.channelActive(context, channel);
   }
 
-  /// 转发请求
-  void relay(Channel clientChannel, Channel remoteChannel) {
-    var rawCodec = RawCodec();
-    clientChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(remoteChannel));
-    remoteChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(clientChannel));
-  }
-
   ///远程转发请求
-  remoteForward(ChannelContext channelContext, HostAndPort remote, Uint8List msg) async {
+  remoteForward(ChannelContext channelContext, HostAndPort remote) async {
     var clientChannel = channelContext.clientChannel!;
     Channel? remoteChannel =
         channelContext.serverChannel ?? await channelContext.connectServerChannel(remote, RelayHandler(clientChannel));
@@ -298,8 +291,18 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
       await remoteChannel.secureSocket(channelContext, host: channelContext.getAttribute(AttributeKeys.domain));
     }
 
-    relay(clientChannel, remoteChannel);
-    handler.channelRead(channelContext, clientChannel, msg);
+    relay(channelContext, clientChannel, remoteChannel);
+  }
+
+  /// 转发请求
+  void relay(ChannelContext channelContext, Channel clientChannel, Channel remoteChannel) {
+    var rawCodec = RawCodec();
+    clientChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(remoteChannel));
+    remoteChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(clientChannel));
+
+    var body = buffer.bytes;
+    buffer.clear();
+    handler.channelRead(channelContext, clientChannel, body);
   }
 
   @override
@@ -307,22 +310,19 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
     try {
       //手机扫码连接转发远程
       HostAndPort? remote = channelContext.getAttribute(AttributeKeys.remote);
+      buffer.add(msg);
+
       if (remote != null) {
-        await remoteForward(channelContext, remote, msg);
+        await remoteForward(channelContext, remote);
         return;
       }
-
-      buffer.add(msg);
 
       Channel? remoteChannel = channelContext.getAttribute(channel.id);
 
       //大body 不解析直接转发
-      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler) {
+      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler && remoteChannel != null) {
         logger.w("[$channel] forward large body");
-        relay(channel, remoteChannel!);
-        var body = buffer.bytes;
-        buffer.clear();
-        handler.channelRead(channelContext, channel, body);
+        relay(channelContext, channel, remoteChannel);
         return;
       }
 
@@ -345,9 +345,14 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
       buffer.clearRead();
 
       var data = decodeResult.data;
+      if (data is HttpMessage) {
+        data.packageSize = length;
+        data.remoteHost = channel.remoteSocketAddress.host;
+        data.remotePort = channel.remoteSocketAddress.port;
+      }
+
       if (data is HttpRequest) {
         channelContext.currentRequest = data;
-        data.packageSize = length;
         data.hostAndPort = channelContext.host ?? getHostAndPort(data, ssl: channel.isSsl);
         if (data.headers.host != null && data.headers.host?.contains(":") == false) {
           data.hostAndPort?.host = data.headers.host!;
@@ -365,17 +370,19 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
 
       if (data is HttpResponse) {
         data.requestId = channelContext.currentRequest?.requestId ?? data.requestId;
-        data.packageSize = length;
-        data.remoteAddress = '${channel.remoteSocketAddress.host}:${channel.remoteSocketAddress.port}';
         data.request ??= channelContext.currentRequest;
       }
 
       //websocket协议
       if (data is HttpResponse && data.isWebSocket && remoteChannel != null) {
+        data.request?.response = data;
+
         channelContext.currentRequest?.hostAndPort?.scheme =
             channel.isSsl ? HostAndPort.wssScheme : HostAndPort.wsScheme;
         logger.d("webSocket ${data.request?.hostAndPort}");
         remoteChannel.write(data);
+
+        channelContext.listener?.onResponse(channelContext, data);
 
         var rawCodec = RawCodec();
         channel.pipeline.handle(rawCodec, rawCodec, WebSocketChannelHandler(remoteChannel, data));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 WangHongEn
+ * Copyright 2023 Hongen Wang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import 'package:network_proxy/network/components/host_filter.dart';
 import 'package:network_proxy/network/components/request_rewrite_manager.dart';
 import 'package:network_proxy/network/components/script_manager.dart';
 import 'package:network_proxy/network/http_client.dart';
+import 'package:network_proxy/network/util/logger.dart';
 
 class RemoteModel {
   final bool connect;
@@ -101,7 +102,7 @@ class ConnectRemoteState extends State<ConnectRemote> {
             });
       }
     }).onError((error, stackTrace) {
-      print(error);
+      logger.e('拉取配置失败', error: error, stackTrace: stackTrace);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizations.pullConfigFail)));
     });
   }

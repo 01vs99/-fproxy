@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 WangHongEn
+ * Copyright 2023 Hongen Wang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -340,7 +340,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
             Container(color: Theme.of(context).hoverColor, height: 8),
             TextButton(
                 child: Container(
-                    height: 50,
+                    height: 45,
                     width: double.infinity,
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(localizations.cancel, textAlign: TextAlign.center)),

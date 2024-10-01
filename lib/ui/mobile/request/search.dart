@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 WangHongEn
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,8 @@ class MobileSearchState extends State<MobileSearch> {
             },
             decoration: InputDecoration(
                 border: InputBorder.none,
-                prefixIcon:
-                    InkWell(onTap: showSearch, child: Icon(Icons.search, color: _searched ? Colors.green : Colors.blue)),
+                prefixIcon: InkWell(
+                    onTap: showSearch, child: Icon(Icons.search, color: _searched ? Colors.green : Colors.blue)),
                 hintText: 'Search')));
   }
 

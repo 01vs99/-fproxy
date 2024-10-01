@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 WangHongEn
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ class MoreMenu extends StatelessWidget {
                 onTap: () async {
                   await Navigator.maybePop(context);
 
-                  MobileHomeState.searchStateKey.currentState?.showSearch();
+                  MobileApp.searchStateKey.currentState?.showSearch();
                 },
               )),
           PopupMenuItem(
@@ -127,7 +127,7 @@ class MoreMenu extends StatelessWidget {
                 onTap: () async {
                   Navigator.maybePop(context);
                   var name = formatDate(DateTime.now(), [m, '-', d, ' ', HH, ':', nn, ':', ss]);
-                  MobileHomeState.requestStateKey.currentState?.export('ProxyPin$name');
+                  MobileApp.requestStateKey.currentState?.export('ProxyPin$name');
                 },
               )),
         ];

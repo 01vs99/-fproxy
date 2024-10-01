@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2023 WangHongEn
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,7 +396,7 @@ class _ScriptEditState extends State<ScriptEdit> {
     super.initState();
     script = CodeController(language: javascript, text: widget.script ?? ScriptManager.template);
     nameController = TextEditingController(text: widget.scriptItem?.name);
-    urlController = TextEditingController(text: widget.url ?? widget.scriptItem?.url);
+    urlController = TextEditingController(text: widget.scriptItem?.url ?? widget.url);
   }
 
   @override
@@ -668,7 +668,7 @@ class _ScriptListState extends State<ScriptList> {
               Container(color: Theme.of(context).hoverColor, height: 8),
               TextButton(
                 child: Container(
-                    height: 50,
+                    height: 45,
                     width: double.infinity,
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(localizations.cancel, textAlign: TextAlign.center)),

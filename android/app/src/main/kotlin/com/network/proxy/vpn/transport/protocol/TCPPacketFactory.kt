@@ -191,6 +191,7 @@ object TCPPacketFactory {
 
         tcp.dataOffset = 5
         tcp.options = null
+        ip.totalLength = ip.getIPHeaderLength() + tcp.getTCPHeaderLength()
 
         return Packet(ip, tcp, createPacketData(ip, tcp, null))
     }

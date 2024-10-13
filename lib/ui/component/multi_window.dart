@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -9,10 +10,12 @@ import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/components/request_rewrite_manager.dart';
 import 'package:network_proxy/network/components/script_manager.dart';
 import 'package:network_proxy/network/http/http.dart';
+import 'package:network_proxy/network/util/lists.dart';
 import 'package:network_proxy/network/util/logger.dart';
 import 'package:network_proxy/ui/component/device.dart';
 import 'package:network_proxy/ui/component/encoder.dart';
 import 'package:network_proxy/ui/component/js_run.dart';
+import 'package:network_proxy/ui/component/qr_code.dart';
 import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/content/body.dart';
 import 'package:network_proxy/ui/desktop/request/request_editor.dart';
@@ -59,6 +62,10 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
         RequestRewrites.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
   }
 
+  if (argument['name'] == 'QrCodeWidget') {
+    return QrCodeWidget(windowId: windowId);
+  }
+
   //脚本日志
   if (argument['name'] == 'ScriptConsoleWidget') {
     return ScriptConsoleWidget(windowId: windowId);
@@ -94,6 +101,24 @@ class MultiWindow {
       'rule': rule?.toJson(),
       'items': items?.map((e) => e.toJson()).toList()
     });
+  }
+
+  static Future<WindowController> openWindow(String title, String widgetName) async {
+    var ratio = 1.0;
+    if (Platform.isWindows) {
+      ratio = WindowManager.instance.getDevicePixelRatio();
+    }
+    registerMethodHandler();
+    final window = await DesktopMultiWindow.createWindow(jsonEncode(
+      {'name': widgetName},
+    ));
+    window.setTitle(title);
+    window
+      ..setFrame(const Offset(50, -10) & Size(800 * ratio, 680 * ratio))
+      ..center();
+    window.show();
+
+    return window;
   }
 
   static bool _refreshRewrite = false;
@@ -171,11 +196,29 @@ void registerMethodHandler() {
       return path;
     }
 
+    if (call.method == 'saveFile') {
+      String? path = (await FilePicker.platform.saveFile(fileName: call.arguments));
+      if (Platform.isWindows) windowManager.blur();
+      return path;
+    }
+
     if (call.method == 'openFile') {
-      XTypeGroup typeGroup = XTypeGroup(
-          extensions: <String>[call.arguments],
-          uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
+      List<String> extensions =
+          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
+
+      XTypeGroup typeGroup =
+          XTypeGroup(extensions: extensions, uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
       final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
+      if (Platform.isWindows) windowManager.blur();
+      return file?.path;
+    }
+
+    if (call.method == 'pickFile') {
+      List<String> extensions =
+          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
+
+      var file =
+          (await FilePicker.platform.pickFiles(allowedExtensions: extensions, type: FileType.custom))?.files.single;
       if (Platform.isWindows) windowManager.blur();
       return file?.path;
     }

@@ -14,39 +14,36 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:easy_permission/easy_permission.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
-import 'package:network_proxy/ui/component/state_component.dart';
+import 'package:network_proxy/ui/component/qrcode/qr_scan_view.dart';
 import 'package:network_proxy/utils/platform.dart';
-import 'package:qrscan/qrscan.dart' as scanner;
-import 'package:zxing_scanner/zxing_scanner.dart';
-import 'package:zxing_widget/qrcode.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 ///二维码
 ///@author Hongen Wang
-class QrCodeWidget extends StatefulWidget {
+class QrCodePage extends StatefulWidget {
   final int? windowId;
 
-  const QrCodeWidget({super.key, this.windowId});
+  const QrCodePage({super.key, this.windowId});
 
   @override
   State<StatefulWidget> createState() {
-    return _QrCodeWidgetState();
+    return _QrCodePageState();
   }
 }
 
-class _QrCodeWidgetState extends State<QrCodeWidget> with SingleTickerProviderStateMixin {
-  TextEditingController decodeData = TextEditingController();
-  late TabController tabController;
+class _QrCodePageState extends State<QrCodePage> with SingleTickerProviderStateMixin {
+  TabController? tabController;
 
   late List<Tab> tabs = [
     Tab(text: 'Encode'),
@@ -58,18 +55,25 @@ class _QrCodeWidgetState extends State<QrCodeWidget> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    tabController = TabController(initialIndex: 0, length: tabs.length, vsync: this);
+    if (Platforms.isMobile()) {
+      tabController = TabController(initialIndex: 0, length: tabs.length, vsync: this);
+    }
   }
 
   @override
   void dispose() {
-    tabController.dispose();
-    decodeData.dispose();
+    tabController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (Platforms.isDesktop()) {
+      return Scaffold(
+          appBar: AppBar(title: Text(localizations.qrCode, style: TextStyle(fontSize: 16)), centerTitle: true),
+          body: _QrEncode(windowId: widget.windowId));
+    }
+
     tabs = [
       Tab(text: localizations.encode),
       Tab(text: localizations.decode),
@@ -83,12 +87,52 @@ class _QrCodeWidgetState extends State<QrCodeWidget> with SingleTickerProviderSt
         resizeToAvoidBottomInset: false,
         body: TabBarView(
           controller: tabController,
-          children: [_QrEncode(windowId: widget.windowId), KeepAliveWrapper(child: qrCodeDecode())],
+          children: [_QrEncode(windowId: widget.windowId), _QrDecode(windowId: widget.windowId)],
         ));
   }
+}
 
-  //qrCode解码
-  Widget qrCodeDecode() {
+InputDecoration _decoration(BuildContext context, String label, {String? hintText}) {
+  Color color = Theme.of(context).colorScheme.primary;
+  return InputDecoration(
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      labelText: label,
+      hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade500),
+      border: OutlineInputBorder(borderSide: BorderSide(width: 0.8, color: color)),
+      enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.3, color: color)),
+      focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2, color: color)));
+}
+
+class _QrDecode extends StatefulWidget {
+  final int? windowId;
+
+  const _QrDecode({this.windowId});
+
+  @override
+  State<StatefulWidget> createState() {
+    return _QrDecodeState();
+  }
+}
+
+class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin {
+  TextEditingController decodeData = TextEditingController();
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  @override
+  void dispose() {
+    decodeData.dispose();
+    super.dispose();
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
     return ListView(children: [
       SizedBox(height: 15),
       Row(
@@ -99,44 +143,39 @@ class _QrCodeWidgetState extends State<QrCodeWidget> with SingleTickerProviderSt
               onPressed: () async {
                 String? path = await selectImage();
                 if (path == null) return;
-
-                var result = await scanImage(await File(path).readAsBytes());
-                if (result == null || result.isEmpty) {
-                  if (mounted) FlutterToastr.show(localizations.decodeFail, context, duration: 2);
+                var result = await FlutterQrReader.imgScan(path);
+                if (result.isEmpty) {
+                  if (context.mounted) FlutterToastr.show(localizations.decodeFail, context, duration: 2);
                   return;
                 }
-                decodeData.text = result[0].text;
+                decodeData.text = result;
               },
               icon: const Icon(Icons.photo, size: 18),
               style: ButtonStyle(
+                  padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
                   shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
               label: Text(localizations.selectImage)),
+          const SizedBox(width: 10),
           if (Platforms.isMobile())
             FilledButton.icon(
                 onPressed: () async {
-                  String scanRes;
-
-                  if (Platform.isAndroid) {
-                    await EasyPermission.requestPermissions([PermissionType.CAMERA]);
-                    scanRes = await scanner.scan() ?? "-1";
-                  } else {
-                    scanRes =
-                        await FlutterBarcodeScanner.scanBarcode("#ff6666", localizations.cancel, true, ScanMode.QR);
-                  }
+                  var scanRes = await QrCodeScanner.scan(context);
+                  if (scanRes == null) return;
 
                   if (scanRes == "-1") {
-                    if (mounted) FlutterToastr.show(localizations.decodeFail, context, duration: 2);
+                    if (context.mounted) FlutterToastr.show(localizations.invalidQRCode, context, duration: 2);
                     return;
                   }
                   decodeData.text = scanRes;
                 },
                 style: ButtonStyle(
+                    padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
                     shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
                 icon: const Icon(Icons.qr_code_scanner_outlined, size: 18),
                 label: Text(localizations.scanQrCode, style: TextStyle(fontSize: 14))),
-          const SizedBox(width: 20),
+          const SizedBox(width: 10),
         ],
       ),
       const SizedBox(height: 20),
@@ -184,18 +223,6 @@ class _QrCodeWidgetState extends State<QrCodeWidget> with SingleTickerProviderSt
   }
 }
 
-InputDecoration _decoration(BuildContext context, String label, {String? hintText}) {
-  Color color = Theme.of(context).colorScheme.primary;
-  return InputDecoration(
-      floatingLabelBehavior: FloatingLabelBehavior.always,
-      labelText: label,
-      hintText: hintText,
-      hintStyle: TextStyle(color: Colors.grey.shade500),
-      border: OutlineInputBorder(borderSide: BorderSide(width: 0.8, color: color)),
-      enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.3, color: color)),
-      focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2, color: color)));
-}
-
 class _QrEncode extends StatefulWidget {
   final int? windowId;
 
@@ -207,7 +234,7 @@ class _QrEncode extends StatefulWidget {
 
 //生成二维码
 class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin {
-  var errorCorrectLevel = ErrorCorrectionLevel.M;
+  var errorCorrectLevel = QrErrorCorrectLevel.M;
   String? data;
   TextEditingController inputData = TextEditingController();
 
@@ -229,7 +256,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
     return ListView(children: [
       Container(
           padding: const EdgeInsets.all(10),
-          height: 160,
+          height: 180,
           child: TextField(
               controller: inputData,
               maxLines: 8,
@@ -241,11 +268,10 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
           const SizedBox(width: 10),
           Row(children: [
             Text("${localizations.errorCorrectLevel}: "),
-            DropdownButton<ErrorCorrectionLevel>(
+            DropdownButton<int>(
                 value: errorCorrectLevel,
-                items: ErrorCorrectionLevel.values
-                    .map((e) =>
-                        DropdownMenuItem<ErrorCorrectionLevel>(value: e, child: Text(getErrorCorrectLevelName(e))))
+                items: QrErrorCorrectLevel.levels
+                    .map((e) => DropdownMenuItem<int>(value: e, child: Text(QrErrorCorrectLevel.getName(e))))
                     .toList(),
                 onChanged: (value) {
                   setState(() {
@@ -253,7 +279,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
                   });
                 }),
           ]),
-          const SizedBox(width: 20),
+          const SizedBox(width: 15),
           FilledButton.icon(
               onPressed: () {
                 setState(() {
@@ -261,15 +287,16 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
                 });
               },
               style: ButtonStyle(
+                  padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
                   shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
               icon: const Icon(Icons.qr_code, size: 18),
-              label: Text(localizations.generateQRcode, style: TextStyle(fontSize: 14))),
-          const SizedBox(width: 20),
+              label: Text(localizations.generateQrCode, style: TextStyle(fontSize: 14))),
+          const SizedBox(width: 10),
         ],
       ),
       const SizedBox(height: 10),
-      if (data != null)
+      if (data != null && data?.isNotEmpty == true)
         Column(
           children: [
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -282,10 +309,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
               SizedBox(width: 20),
             ]),
             SizedBox(height: 5),
-            Center(
-                child: BarcodeWidget(
-                    size: const Size(300, 300),
-                    QrcodePainter(inputData.text, errorCorrectionLevel: errorCorrectLevel))),
+            Center(child: QrImageView(size: 300, data: inputData.text, errorCorrectionLevel: errorCorrectLevel)),
           ],
         ),
       SizedBox(height: 15),
@@ -294,12 +318,12 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
 
   //保存相册
   saveImage() async {
-    if (data == null) {
+    if (data == null || data!.isEmpty) {
       return;
     }
 
     if (Platforms.isMobile()) {
-      var imageBytes = await toImageBytes(data!);
+      var imageBytes = await toImageBytes();
       String? path = await ImagePickers.saveByteDataImageToGallery(imageBytes);
       if (path != null && mounted) {
         FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
@@ -308,11 +332,10 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
     }
 
     if (Platforms.isDesktop()) {
-      String? path = await DesktopMultiWindow.invokeMethod(0, 'saveFile', "qrcode.png");
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+      String? path = (await FilePicker.platform.saveFile(fileName: "qrcode.png"));
       if (path == null) return;
 
-      var imageBytes = await toImageBytes(data!);
+      var imageBytes = await toImageBytes();
       await File(path).writeAsBytes(imageBytes);
       if (mounted) {
         FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
@@ -320,26 +343,10 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
     }
   }
 
-  Future<Uint8List> toImageBytes(String data) async {
-    QrcodePainter painter = QrcodePainter(data, errorCorrectionLevel: errorCorrectLevel);
-    ui.Image image = (await painter.toImage(ui.Size(300, 300)));
-    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  Future<Uint8List> toImageBytes() async {
+    QrPainter painter = QrPainter(data: data!, errorCorrectionLevel: errorCorrectLevel, version: QrVersions.auto);
+    var imageData = await painter.toImageData(300);
 
-    return byteData!.buffer.asUint8List();
-  }
-
-  static String getErrorCorrectLevelName(ErrorCorrectionLevel level) {
-    switch (level) {
-      case ErrorCorrectionLevel.L:
-        return 'Low';
-      case ErrorCorrectionLevel.M:
-        return 'Medium';
-      case ErrorCorrectionLevel.Q:
-        return 'Quartile';
-      case ErrorCorrectionLevel.H:
-        return 'High';
-      default:
-        throw ArgumentError('level $level not supported');
-    }
+    return imageData!.buffer.asUint8List();
   }
 }

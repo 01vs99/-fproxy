@@ -12,10 +12,11 @@ import 'package:network_proxy/network/components/script_manager.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/util/lists.dart';
 import 'package:network_proxy/network/util/logger.dart';
+import 'package:network_proxy/ui/component/cert_hash.dart';
 import 'package:network_proxy/ui/component/device.dart';
 import 'package:network_proxy/ui/component/encoder.dart';
 import 'package:network_proxy/ui/component/js_run.dart';
-import 'package:network_proxy/ui/component/qr_code.dart';
+import 'package:network_proxy/ui/component/qr_code_page.dart';
 import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/content/body.dart';
 import 'package:network_proxy/ui/desktop/request/request_editor.dart';
@@ -62,8 +63,12 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
         RequestRewrites.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
   }
 
-  if (argument['name'] == 'QrCodeWidget') {
-    return QrCodeWidget(windowId: windowId);
+  if (argument['name'] == 'QrCodePage') {
+    return QrCodePage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'CertHashPage') {
+    return CertHashPage();
   }
 
   //脚本日志
@@ -198,16 +203,15 @@ void registerMethodHandler() {
 
     if (call.method == 'saveFile') {
       String? path = (await FilePicker.platform.saveFile(fileName: call.arguments));
-      if (Platform.isWindows) windowManager.blur();
       return path;
     }
 
     if (call.method == 'openFile') {
       List<String> extensions =
-          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
+      call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
 
       XTypeGroup typeGroup =
-          XTypeGroup(extensions: extensions, uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
+      XTypeGroup(extensions: extensions, uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
       final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
       if (Platform.isWindows) windowManager.blur();
       return file?.path;
@@ -215,7 +219,7 @@ void registerMethodHandler() {
 
     if (call.method == 'pickFile') {
       List<String> extensions =
-          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
+      call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
 
       var file =
           (await FilePicker.platform.pickFiles(allowedExtensions: extensions, type: FileType.custom))?.files.single;

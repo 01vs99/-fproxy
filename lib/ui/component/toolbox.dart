@@ -5,10 +5,11 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/server.dart';
+import 'package:network_proxy/ui/component/cert_hash.dart';
 import 'package:network_proxy/ui/component/encoder.dart';
 import 'package:network_proxy/ui/component/js_run.dart';
 import 'package:network_proxy/ui/component/multi_window.dart';
-import 'package:network_proxy/ui/component/qr_code.dart';
+import 'package:network_proxy/ui/component/qr_code_page.dart';
 import 'package:network_proxy/ui/mobile/request/request_editor.dart';
 import 'package:network_proxy/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
@@ -111,22 +112,24 @@ class _ToolboxState extends State<Toolbox> {
           Text(localizations.other, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           Row(
             children: [
-              // IconText(
-              //     onTap: () async {
-              //       if (Platforms.isMobile()) {
-              //         Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CertHashWidget()));
-              //         return;
-              //       }
-              //     },
-              //     icon: Icons.near_me,
-              //     text: "证书Hash名称"),
               IconText(
                   onTap: () async {
                     if (Platforms.isMobile()) {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const QrCodeWidget()));
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CertHashPage()));
                       return;
                     }
-                    MultiWindow.openWindow(localizations.qrCode, 'QrCodeWidget');
+                    MultiWindow.openWindow(localizations.certHashName, 'CertHashPage');
+                  },
+                  icon: Icons.key,
+                  text: localizations.certHashName),
+              const SizedBox(width: 10),
+              IconText(
+                  onTap: () async {
+                    if (Platforms.isMobile()) {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const QrCodePage()));
+                      return;
+                    }
+                    MultiWindow.openWindow(localizations.qrCode, 'QrCodePage');
                   },
                   icon: Icons.qr_code_2,
                   text: localizations.qrCode),

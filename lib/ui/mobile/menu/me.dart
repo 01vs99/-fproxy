@@ -71,7 +71,7 @@ class _MePageState extends State<MePage> {
                 onTap: () => navigator(context, MobileSslWidget(proxyServer: proxyServer))),
             const Divider(thickness: 0.35),
             ListTile(
-                leading: Icon(Icons.favorite, color: color),
+                leading: Icon(Icons.favorite_outline, color: color),
                 title: Text(localizations.favorites),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => navigator(context, MobileFavorites(proxyServer: proxyServer))),
@@ -103,6 +103,11 @@ class _MePageState extends State<MePage> {
                   }
                 }),
             ListTile(
+                title: Text(localizations.script),
+                leading: Icon(Icons.javascript_outlined, color: color),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => navigator(context, const MobileScript())),
+            ListTile(
                 title: Text(localizations.requestBlock),
                 leading: Icon(Icons.block_flipped, color: color),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -113,13 +118,8 @@ class _MePageState extends State<MePage> {
                   }
                 }),
             ListTile(
-                title: Text(localizations.script),
-                leading: Icon(Icons.code, color: color),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => navigator(context, const MobileScript())),
-            ListTile(
                 title: Text(localizations.setting),
-                leading: Icon(Icons.settings, color: color),
+                leading: Icon(Icons.settings_outlined, color: color),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => navigator(
                     context,

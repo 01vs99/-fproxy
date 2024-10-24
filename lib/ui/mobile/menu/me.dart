@@ -18,12 +18,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/components/request_block_manager.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
+import 'package:network_proxy/network/components/rewrite/request_rewrite_manager.dart';
 import 'package:network_proxy/storage/histories.dart';
 import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/configuration.dart';
 import 'package:network_proxy/ui/mobile/menu/drawer.dart';
-import 'package:network_proxy/ui/mobile/menu/preference.dart';
+import 'package:network_proxy/ui/mobile/setting/preference.dart';
 import 'package:network_proxy/ui/mobile/mobile.dart';
 import 'package:network_proxy/ui/mobile/request/favorite.dart';
 import 'package:network_proxy/ui/mobile/request/history.dart';
@@ -94,10 +94,10 @@ class _MePageState extends State<MePage> {
                 onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
             ListTile(
                 title: Text(localizations.requestRewrite),
-                leading: Icon(Icons.replay_outlined, color: color),
+                leading: Icon(Icons.edit_outlined, color: color),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () async {
-                  var requestRewrites = await RequestRewrites.instance;
+                  var requestRewrites = await RequestRewriteManager.instance;
                   if (context.mounted) {
                     navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
                   }
@@ -126,7 +126,7 @@ class _MePageState extends State<MePage> {
                     futureWidget(
                         AppConfiguration.instance,
                         (appConfiguration) =>
-                            SettingMenu(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
+                            Preference(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
             ListTile(
                 title: Text(localizations.about),
                 leading: Icon(Icons.info_outline, color: color),

@@ -2,7 +2,7 @@ name: network_proxy
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.1.4+14
+version: 1.1.5+15
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -13,7 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: any
-  crypto: ^3.0.5
+  crypto: ^3.0.6
   cupertino_icons: ^1.0.2
   basic_utils: ^5.7.0
   logger: ^2.4.0
@@ -30,7 +30,7 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_qr_reader: ^1.0.5
   flutter_toastr: ^1.0.3
-  share_plus: ^10.1.0
+  share_plus: ^10.1.1
   brotli: ^0.6.0
   flutter_js: ^0.8.1
   flutter_code_editor: ^0.3.2

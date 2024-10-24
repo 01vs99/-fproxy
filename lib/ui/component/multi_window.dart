@@ -23,7 +23,8 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
+import 'package:network_proxy/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:network_proxy/network/components/rewrite/rewrite_rule.dart';
 import 'package:network_proxy/network/components/script_manager.dart';
 import 'package:network_proxy/network/http/http.dart';
 import 'package:network_proxy/network/util/lists.dart';
@@ -33,6 +34,7 @@ import 'package:network_proxy/ui/component/device.dart';
 import 'package:network_proxy/ui/component/encoder.dart';
 import 'package:network_proxy/ui/component/js_run.dart';
 import 'package:network_proxy/ui/component/qr_code_page.dart';
+import 'package:network_proxy/ui/component/regexp.dart';
 import 'package:network_proxy/ui/component/utils.dart';
 import 'package:network_proxy/ui/content/body.dart';
 import 'package:network_proxy/ui/desktop/request/request_editor.dart';
@@ -76,7 +78,7 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   //请求重写
   if (argument['name'] == 'RequestRewriteWidget') {
     return futureWidget(
-        RequestRewrites.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
+        RequestRewriteManager.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
   }
 
   if (argument['name'] == 'QrCodePage') {
@@ -87,15 +89,17 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
     return CertHashPage();
   }
 
-  //脚本日志
-  if (argument['name'] == 'ScriptConsoleWidget') {
-    return ScriptConsoleWidget(windowId: windowId);
-  }
-
   if (argument['name'] == 'JavaScript') {
     return const JavaScript();
   }
 
+  if (argument['name'] == 'RegExpPage') {
+    return const RegExpPage();
+  }
+  //脚本日志
+  if (argument['name'] == 'ScriptConsoleWidget') {
+    return ScriptConsoleWidget(windowId: windowId);
+  }
   return const SizedBox();
 }
 
@@ -146,7 +150,7 @@ class MultiWindow {
   static bool _refreshRewrite = false;
 
   static Future<void> _handleRefreshRewrite(Operation operation, Map<dynamic, dynamic> arguments) async {
-    RequestRewrites requestRewrites = await RequestRewrites.instance;
+    RequestRewriteManager requestRewrites = await RequestRewriteManager.instance;
 
     switch (operation) {
       case Operation.add:
@@ -279,25 +283,6 @@ encodeWindow(EncoderType type, BuildContext context, [String? text]) async {
   window.setTitle(AppLocalizations.of(context)!.encode);
   window
     ..setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio))
-    ..center()
-    ..show();
-}
-
-///打开脚本窗口
-openScriptWindow() async {
-  var ratio = 1.0;
-  if (Platform.isWindows) {
-    ratio = WindowManager.instance.getDevicePixelRatio();
-  }
-  registerMethodHandler();
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'ScriptWidget'},
-  ));
-
-  // window.setTitle('script');
-  window.setTitle('Script');
-  window
-    ..setFrame(const Offset(30, 0) & Size(800 * ratio, 690 * ratio))
     ..center()
     ..show();
 }

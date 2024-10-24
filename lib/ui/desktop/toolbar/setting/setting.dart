@@ -71,7 +71,8 @@ class _SettingState extends State<Setting> {
         item(localizations.domainFilter, onPressed: hostFilter),
         item(localizations.requestRewrite, onPressed: requestRewrite),
         item(localizations.requestBlock, onPressed: showRequestBlock),
-        item(localizations.script, onPressed: () => openScriptWindow()),
+        item(localizations.script,
+            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 700))),
         item(localizations.externalProxy, onPressed: setExternalProxy),
         item("Github", onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/network_proxy_flutter"))),
       ],
@@ -296,6 +297,8 @@ class _PortState extends State<PortWidget> {
             focusNode: portFocus,
             controller: textController,
             textAlign: TextAlign.center,
+            onTapOutside: (event) => portFocus.unfocus(),
+            keyboardType: TextInputType.datetime,
             inputFormatters: <TextInputFormatter>[
               LengthLimitingTextInputFormatter(5),
               FilteringTextInputFormatter.allow(RegExp("[0-9]"))

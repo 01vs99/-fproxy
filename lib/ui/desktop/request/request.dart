@@ -41,6 +41,8 @@ import 'package:network_proxy/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../common.dart';
+
 /// 请求 URI
 /// @author wanghongen
 /// 2023/10/8
@@ -82,7 +84,7 @@ class _RequestWidgetState extends State<RequestWidget> {
   Widget build(BuildContext context) {
     var request = widget.request;
     var response = widget.response.get() ?? request.response;
-    String path = widget.displayDomain ? '${request.remoteDomain()}${request.path()}' : request.path();
+    String path = widget.displayDomain ? request.domainPath : request.path;
     String title = '${request.method.name} $path';
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
@@ -178,11 +180,13 @@ class _RequestWidgetState extends State<RequestWidget> {
               requestEdit();
             });
           }),
+      MenuItem.separator(),
+      MenuItem(label: localizations.requestRewrite, onClick: (_) => showRequestRewriteDialog(context, widget.request)),
       MenuItem(
           label: localizations.script,
           onClick: (_) async {
             var scriptManager = await ScriptManager.instance;
-            var url = '${widget.request.remoteDomain()}${widget.request.path()}';
+            var url = widget.request.domainPath;
             var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.url == url);
 
             String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);

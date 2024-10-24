@@ -21,7 +21,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
+import 'package:network_proxy/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:network_proxy/network/components/rewrite/rewrite_rule.dart';
 import 'package:network_proxy/network/components/script_manager.dart';
 import 'package:network_proxy/network/host_port.dart';
 import 'package:network_proxy/network/http/http.dart';
@@ -94,9 +95,13 @@ class RequestRowState extends State<RequestRow> {
     return KeywordHighlight.getHighlightColor(url);
   }
 
+  BuildContext getContext() => mounted ? super.context : NavigatorHelper().context;
+
+  BuildContext get availableContext => getContext();
+
   @override
   Widget build(BuildContext context) {
-    String url = widget.displayDomain ? request.requestUrl : request.path();
+    String url = widget.displayDomain ? request.requestUrl : request.path;
 
     var title = Strings.autoLineString('${request.method.name} $url');
 
@@ -128,7 +133,7 @@ class RequestRowState extends State<RequestRow> {
           contentPadding:
               Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
           onTap: () {
-            Navigator.of(this.context).push(MaterialPageRoute(builder: (context) {
+            Navigator.of(getContext()).push(MaterialPageRoute(builder: (context) {
               return NetworkTabController(
                   proxyServer: widget.proxyServer,
                   httpRequest: request,
@@ -174,7 +179,7 @@ class RequestRowState extends State<RequestRow> {
     MediaQueryData mediaQuery = MediaQuery.of(context);
     var position = RelativeRect.fromLTRB(globalPosition.dx, globalPosition.dy, globalPosition.dx, globalPosition.dy);
     // Trigger haptic feedback
-    HapticFeedback.mediumImpact();
+    if (Platform.isAndroid) HapticFeedback.mediumImpact();
 
     showMenu(
         context: context,
@@ -196,10 +201,8 @@ class RequestRowState extends State<RequestRow> {
                 left: itemButton(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: request.requestUrl)).then((value) {
-                        if (mounted) {
-                          FlutterToastr.show(localizations.copied, context);
-                          Navigator.maybePop(context);
-                        }
+                        FlutterToastr.show(localizations.copied, getContext());
+                        Navigator.maybePop(getContext());
                       });
                     },
                     label: localizations.copyUrl,
@@ -208,10 +211,8 @@ class RequestRowState extends State<RequestRow> {
                 right: itemButton(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: curlRequest(request))).then((value) {
-                        if (mounted) {
-                          FlutterToastr.show(localizations.copied, context);
-                          Navigator.maybePop(context);
-                        }
+                        FlutterToastr.show(localizations.copied, getContext());
+                        Navigator.maybePop(getContext());
                       });
                     },
                     label: localizations.copyCurl,
@@ -222,7 +223,7 @@ class RequestRowState extends State<RequestRow> {
                 left: itemButton(
                     onPressed: () {
                       onRepeat(request);
-                      Navigator.maybePop(context);
+                      Navigator.maybePop(getContext());
                     },
                     label: localizations.repeat,
                     icon: Icons.repeat_one),
@@ -234,91 +235,73 @@ class RequestRowState extends State<RequestRow> {
                 left: itemButton(
                     onPressed: () {
                       FavoriteStorage.addFavorite(widget.request);
-                      FlutterToastr.show(localizations.addSuccess, context);
-                      Navigator.maybePop(context);
+                      FlutterToastr.show(localizations.addSuccess, availableContext);
+                      Navigator.maybePop(availableContext);
                     },
                     label: localizations.favorite,
                     icon: Icons.favorite_outline),
                 right: itemButton(
                     onPressed: () async {
-                      await Navigator.maybePop(context);
+                      await Navigator.maybePop(availableContext);
 
                       var pageRoute = MaterialPageRoute(
                           builder: (context) =>
                               MobileRequestEditor(request: widget.request, proxyServer: widget.proxyServer));
-                      if (mounted) {
-                        Navigator.push(context, pageRoute);
-                      } else {
-                        NavigatorHelper.push(pageRoute);
-                      }
+                      Navigator.push(getContext(), pageRoute);
                     },
                     label: localizations.editRequest,
-                    icon: Icons.edit_outlined),
+                    icon: Icons.replay_outlined),
               ),
               //script and rewrite
               menuItem(
                 left: itemButton(
                     onPressed: () async {
-                      Navigator.maybePop(context);
+                      Navigator.maybePop(availableContext);
 
                       var scriptManager = await ScriptManager.instance;
-                      var url = '${request.remoteDomain()}${request.path()}';
-                      var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.url == url);
+                      var url = request.domainPath;
+                      var scriptItem = scriptManager.list.firstWhereOrNull((it) => it.url == url);
                       String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
 
                       var pageRoute = MaterialPageRoute(
                           builder: (context) =>
                               ScriptEdit(scriptItem: scriptItem, script: script, url: scriptItem?.url ?? url));
-                      if (mounted) {
-                        Navigator.push(context, pageRoute);
-                      } else {
-                        NavigatorHelper.push(pageRoute);
-                      }
+
+                      Navigator.push(getContext(), pageRoute);
                     },
                     label: localizations.script,
                     icon: Icons.javascript_outlined),
                 right: itemButton(
                     onPressed: () async {
-                      Navigator.maybePop(context);
+                      Navigator.maybePop(availableContext);
                       bool isRequest = response == null;
-                      var requestRewrites = await RequestRewrites.instance;
+                      var requestRewrites = await RequestRewriteManager.instance;
 
                       var ruleType = isRequest ? RuleType.requestReplace : RuleType.responseReplace;
-                      var url = '${request.remoteDomain()}${request.path()}';
-                      var rule = requestRewrites.rules.firstWhere((it) => it.matchUrl(url, ruleType),
-                          orElse: () => RequestRewriteRule(type: ruleType, url: url));
+                      var rule = requestRewrites.getRequestRewriteRule(request, ruleType);
 
                       var rewriteItems = await requestRewrites.getRewriteItems(rule);
-                      RewriteType rewriteType =
-                          isRequest ? RewriteType.replaceRequestBody : RewriteType.replaceResponseBody;
-                      if (!rewriteItems.any((element) => element.type == rewriteType)) {
-                        rewriteItems.add(RewriteItem(rewriteType, true,
-                            values: {'body': isRequest ? request.bodyAsString : response?.bodyAsString}));
-                      }
 
-                      var pageRoute = MaterialPageRoute(builder: (_) => RewriteRule(rule: rule, items: rewriteItems));
-
-                      if (mounted) {
-                        Navigator.push(context, pageRoute);
-                      } else {
-                        NavigatorHelper.push(pageRoute);
-                      }
+                      var pageRoute = MaterialPageRoute(
+                          builder: (_) => RewriteRule(rule: rule, items: rewriteItems, request: request));
+                      var context = availableContext;
+                      if (context.mounted) Navigator.push(context, pageRoute);
                     },
                     label: localizations.requestRewrite,
-                    icon: Icons.replay_outlined),
+                    icon: Icons.edit_outlined),
               ),
               menuItem(
                 left: itemButton(
                     onPressed: () {
-                      highlightColor = Theme.of(context).colorScheme.primary;
-                      Navigator.maybePop(context);
+                      highlightColor = Theme.of(availableContext).colorScheme.primary;
+                      Navigator.maybePop(availableContext);
                     },
                     label: localizations.highlight,
                     icon: Icons.highlight_outlined),
                 right: itemButton(
                     onPressed: () {
                       highlightColor = Colors.grey;
-                      Navigator.maybePop(context);
+                      Navigator.maybePop(availableContext);
                     },
                     label: localizations.markRead,
                     icon: Icons.mark_chat_read_outlined),
@@ -328,8 +311,8 @@ class RequestRowState extends State<RequestRow> {
                 itemButton(
                     onPressed: () {
                       widget.onRemove?.call(request);
-                      FlutterToastr.show(localizations.deleteSuccess, context);
-                      Navigator.maybePop(context);
+                      FlutterToastr.show(localizations.deleteSuccess, availableContext);
+                      Navigator.maybePop(availableContext);
                     },
                     label: localizations.delete,
                     icon: Icons.delete_outline),
@@ -345,15 +328,12 @@ class RequestRowState extends State<RequestRow> {
 
   //显示高级重发
   showCustomRepeat(HttpRequest request) async {
-    await Navigator.maybePop(context);
+    await Navigator.maybePop(availableContext);
     var pageRoute = MaterialPageRoute(
         builder: (context) => futureWidget(SharedPreferences.getInstance(),
             (prefs) => MobileCustomRepeat(onRepeat: () => onRepeat(request), prefs: prefs)));
-    if (mounted) {
-      Navigator.push(context, pageRoute);
-    } else {
-      NavigatorHelper.push(pageRoute);
-    }
+
+    Navigator.push(getContext(), pageRoute);
   }
 
   onRepeat(HttpRequest request) {
@@ -361,16 +341,17 @@ class RequestRowState extends State<RequestRow> {
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
 
-    if (mounted) {
-      FlutterToastr.show(localizations.reSendRequest, context);
-    }
+    FlutterToastr.show(localizations.reSendRequest, availableContext);
   }
 
   Widget itemButton(
       {required String label, required IconData icon, required Function() onPressed, double iconSize = 20}) {
-    var style = Theme.of(context).textTheme.bodyMedium;
+    var theme = Theme.of(context);
+    var style = theme.textTheme.bodyMedium;
     return TextButton.icon(
-        onPressed: onPressed, label: Text(label, style: style), icon: Icon(icon, size: iconSize, color: style?.color));
+        onPressed: onPressed,
+        label: Text(label, style: style),
+        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withOpacity(0.65)));
   }
 
   Widget menuItem({required Widget left, required Widget right}) {

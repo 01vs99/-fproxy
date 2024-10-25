@@ -18,7 +18,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_js/flutter_js.dart';
-import 'package:network_proxy/network/util/lists.dart';
+import 'package:proxypin/network/util/lists.dart';
 
 /// JsMd5
 /// @author Hongen Wang

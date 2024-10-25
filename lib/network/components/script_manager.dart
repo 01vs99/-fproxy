@@ -19,14 +19,14 @@ import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/flutter_js.dart';
-import 'package:network_proxy/network/components/js/file.dart';
-import 'package:network_proxy/network/components/js/md5.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/util/lists.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/random.dart';
-import 'package:network_proxy/ui/component/device.dart';
+import 'package:proxypin/network/components/js/file.dart';
+import 'package:proxypin/network/components/js/md5.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/lists.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/ui/component/device.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// @author wanghongen

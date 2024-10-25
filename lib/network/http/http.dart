@@ -17,12 +17,12 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/content_type.dart';
-import 'package:network_proxy/network/http/websocket.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/process_info.dart';
-import 'package:network_proxy/utils/compress.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/utils/compress.dart';
 
 import 'http_headers.dart';
 

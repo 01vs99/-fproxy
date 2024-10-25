@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_js/flutter_js.dart';
-import 'package:network_proxy/network/components/js/file.dart';
-import 'package:network_proxy/network/components/js/md5.dart';
+import 'package:proxypin/network/components/js/file.dart';
+import 'package:proxypin/network/components/js/md5.dart';
 
 // Convert JS request
 // Map<String, dynamic> convertJsRequest(HttpRequest request) {

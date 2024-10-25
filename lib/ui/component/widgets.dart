@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/utils/lang.dart';
 
 class CustomPopupMenuItem<T> extends PopupMenuItem<T> {
   final Color? color;

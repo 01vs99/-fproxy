@@ -16,10 +16,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 /// @author wanghongen
 /// 2024/1/2

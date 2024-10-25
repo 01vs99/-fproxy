@@ -1,4 +1,4 @@
-import 'package:network_proxy/network/http/http.dart';
+import 'package:proxypin/network/http/http.dart';
 
 /// A Interceptor that can intercept and modify the request and response.
 /// @author Hongen Wang

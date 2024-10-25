@@ -17,7 +17,7 @@
 import 'dart:io';
 
 import 'package:flutter_js/flutter_js.dart';
-import 'package:network_proxy/network/util/logger.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 /// FileBridge for file operation
 /// @Author: Hongen Wang

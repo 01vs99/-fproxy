@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/utils/curl.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/utils/curl.dart';
 import 'package:share_plus/share_plus.dart';
 
 ///分享按钮

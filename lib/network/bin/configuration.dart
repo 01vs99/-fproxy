@@ -17,12 +17,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/util/file_read.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/system_proxy.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/util/file_read.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/system_proxy.dart';
+import 'package:proxypin/utils/platform.dart';
 
 class Configuration {
   ///代理相关配置

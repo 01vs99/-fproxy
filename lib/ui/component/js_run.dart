@@ -6,8 +6,8 @@ import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_js/flutter_js.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
-import 'package:network_proxy/network/components/js/file.dart';
-import 'package:network_proxy/network/components/js/md5.dart';
+import 'package:proxypin/network/components/js/file.dart';
+import 'package:proxypin/network/components/js/md5.dart';
 
 class JavaScript extends StatefulWidget {
   const JavaScript({super.key});

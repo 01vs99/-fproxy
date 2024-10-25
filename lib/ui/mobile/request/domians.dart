@@ -21,15 +21,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/mobile/request/request_sequence.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/request/request_sequence.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 ///域名列表
 ///@author wanghongen

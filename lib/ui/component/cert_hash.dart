@@ -15,14 +15,15 @@
  */
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/util/cert/x509.dart';
-import 'package:network_proxy/ui/component/text_field.dart';
+import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/ui/component/text_field.dart';
 
 ///证书哈希名称查看
 ///@author Hongen Wang
@@ -58,11 +59,12 @@ class _CertHashPageState extends State<CertHashPage> {
             ElevatedButton.icon(
                 onPressed: () async {
                   FilePickerResult? result = await FilePicker.platform
-                      .pickFiles(type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer']);
+                      .pickFiles(type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer', 'der']);
                   if (result == null) return;
+
                   File file = File(result.files.single.path!);
-                  String content = await file.readAsString();
-                  input.text = content;
+                  var bytes = await file.readAsBytes();
+                  input.text = tryDerFormat(bytes) ?? String.fromCharCodes(bytes);
                   getSubjectName();
                 },
                 style: buttonStyle,
@@ -115,13 +117,27 @@ class _CertHashPageState extends State<CertHashPage> {
     if (content.isEmpty) return;
     try {
       var caCert = X509Utils.x509CertificateFromPem(content);
-
       var subject = caCert.tbsCertificate?.subject;
       if (subject == null) return;
       var subjectHashName = X509Generate.getSubjectHashName(subject);
       decodeData.text = '$subjectHashName.0';
     } catch (e) {
       FlutterToastr.show(localizations.decodeFail, context, duration: 3, backgroundColor: Colors.red);
+    }
+  }
+
+  String? tryDerFormat(Uint8List data) {
+    try {
+      final bytes = data.sublist(0, 4);
+
+      // Check if the bytes match the DER format (ASN.1 encoding)
+      // DER encoded certificates typically start with 0x30 (SEQUENCE) or 0xA0 (APPLICATION)
+      if (bytes[0] == 0x30 || bytes[0] == 0xA0) {
+        return X509Utils.crlDerToPem(data);
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 

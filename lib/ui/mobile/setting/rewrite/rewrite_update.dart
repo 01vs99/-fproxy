@@ -17,11 +17,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/components/rewrite/rewrite_rule.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/component/text_field.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/text_field.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/lang.dart';
 
 class MobileRewriteUpdate extends StatefulWidget {
   final RuleType ruleType;

@@ -19,10 +19,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 ///启动按钮

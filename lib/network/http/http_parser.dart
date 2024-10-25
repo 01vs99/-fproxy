@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/http/constants.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
+import 'package:proxypin/network/http/constants.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
 
 /// http解析器
 class HttpParse {

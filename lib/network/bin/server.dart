@@ -17,13 +17,13 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/components/request_rewrite_component.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/websocket.dart';
-import 'package:network_proxy/network/util/crts.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/components/request_rewrite_component.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/util/crts.dart';
+import 'package:proxypin/utils/platform.dart';
 
 import '../handler.dart';
 import '../http/codec.dart';

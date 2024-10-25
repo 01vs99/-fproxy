@@ -15,8 +15,8 @@
  */
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:network_proxy/ui/component/json/theme.dart';
-import 'package:network_proxy/ui/component/utils.dart';
+import 'package:proxypin/ui/component/json/theme.dart';
+import 'package:proxypin/ui/component/utils.dart';
 
 class JsonText extends StatefulWidget {
   final ColorTheme colorTheme;

@@ -17,13 +17,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/native/pip.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/utils/ip.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/native/pip.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/utils/ip.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 /// Picture in Picture Window
 class PictureInPictureWindow extends StatefulWidget {

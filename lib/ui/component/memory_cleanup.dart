@@ -16,8 +16,8 @@
 
 import 'dart:io';
 
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 /// Memory cleanup handle
 /// @author wanghongen

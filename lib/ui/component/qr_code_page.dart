@@ -25,9 +25,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
-import 'package:network_proxy/ui/component/qrcode/qr_scan_view.dart';
-import 'package:network_proxy/ui/component/text_field.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/ui/component/qrcode/qr_scan_view.dart';
+import 'package:proxypin/ui/component/text_field.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 ///二维码

@@ -27,7 +27,7 @@ class About extends StatelessWidget {
     AppLocalizations localizations = AppLocalizations.of(context)!;
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
-    String gitHub = "https://github.com/wanghongenpin/network_proxy_flutter";
+    String gitHub = "https://github.com/wanghongenpin/proxypin";
     return Scaffold(
         appBar: AppBar(title: Text(localizations.about, style: const TextStyle(fontSize: 16)), centerTitle: true),
         body: Column(

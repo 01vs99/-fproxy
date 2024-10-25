@@ -16,23 +16,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/handler.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/websocket.dart';
-import 'package:network_proxy/ui/component/memory_cleanup.dart';
-import 'package:network_proxy/ui/component/toolbox.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/ui/content/panel.dart';
-import 'package:network_proxy/ui/desktop/left_menus/favorite.dart';
-import 'package:network_proxy/ui/desktop/left_menus/history.dart';
-import 'package:network_proxy/ui/desktop/left_menus/navigation.dart';
-import 'package:network_proxy/ui/desktop/request/list.dart';
-import 'package:network_proxy/ui/desktop/toolbar/toolbar.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/ui/component/memory_cleanup.dart';
+import 'package:proxypin/ui/component/toolbox.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/content/panel.dart';
+import 'package:proxypin/ui/desktop/left_menus/favorite.dart';
+import 'package:proxypin/ui/desktop/left_menus/history.dart';
+import 'package:proxypin/ui/desktop/left_menus/navigation.dart';
+import 'package:proxypin/ui/desktop/request/list.dart';
+import 'package:proxypin/ui/desktop/toolbar/toolbar.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 import '../component/split_view.dart';
 

@@ -4,15 +4,15 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/ui/component/cert_hash.dart';
-import 'package:network_proxy/ui/component/encoder.dart';
-import 'package:network_proxy/ui/component/js_run.dart';
-import 'package:network_proxy/ui/component/multi_window.dart';
-import 'package:network_proxy/ui/component/qr_code_page.dart';
-import 'package:network_proxy/ui/component/regexp.dart';
-import 'package:network_proxy/ui/mobile/request/request_editor.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/cert_hash.dart';
+import 'package:proxypin/ui/component/encoder.dart';
+import 'package:proxypin/ui/component/js_run.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/qr_code_page.dart';
+import 'package:proxypin/ui/component/regexp.dart';
+import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 class Toolbox extends StatefulWidget {

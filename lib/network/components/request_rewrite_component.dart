@@ -17,12 +17,12 @@
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:network_proxy/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:network_proxy/network/http/constants.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/util/file_read.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/http/constants.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/file_read.dart';
+import 'package:proxypin/utils/lang.dart';
 
 import 'rewrite/rewrite_rule.dart';
 

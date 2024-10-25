@@ -17,7 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/ui/component/text_field.dart';
+import 'package:proxypin/ui/component/text_field.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 ///正则表达式工具
@@ -66,7 +66,7 @@ class _RegExpPageState extends State<RegExpPage> {
 
     return Scaffold(
         appBar: PreferredSize(
-            preferredSize: Size.fromHeight(40),
+            preferredSize: Size.fromHeight(50),
             child: AppBar(
                 title: Text(localizations.regExp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 centerTitle: true)),

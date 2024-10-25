@@ -21,14 +21,14 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/cert/basic_constraints.dart';
-import 'package:network_proxy/network/util/cert/pkcs12.dart';
-import 'package:network_proxy/network/util/cert/x509.dart';
-import 'package:network_proxy/network/util/random.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:proxypin/network/util/cert/pkcs12.dart';
+import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:network_proxy/network/util/cert/key_usage.dart' as x509;
+import 'package:proxypin/network/util/cert/key_usage.dart' as x509;
 
 import 'file_read.dart';
 

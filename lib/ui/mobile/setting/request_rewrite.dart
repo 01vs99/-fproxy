@@ -21,13 +21,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:network_proxy/network/components/rewrite/rewrite_rule.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/mobile/setting/rewrite/rewrite_update.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/setting/rewrite/rewrite_update.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -465,7 +465,7 @@ class _RewriteRuleState extends State<RewriteRule> {
                 recognizer: TapGestureRecognizer()
                   ..onTap = () => launchUrl(Uri.parse(isCN
                       ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
-                      : 'https://github.com/wanghongenpin/network_proxy_flutter/wiki/Request-Rewrite')))),
+                      : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite')))),
           ]),
           actions: [
             TextButton(

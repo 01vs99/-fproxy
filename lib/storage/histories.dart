@@ -70,7 +70,6 @@ class HistoryStorage {
 
   static Future<String> _homePath() async {
     final home = await getApplicationSupportDirectory();
-    print(home);
     return '${home.path}${Platform.pathSeparator}history';
   }
 

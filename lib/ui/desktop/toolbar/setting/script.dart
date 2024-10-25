@@ -351,7 +351,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                     0,
                     "launchUrl",
                     isCN
-                        ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%84%9A%E6%9C%AC'
+                        ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%84%9A%E6%9C%AC'
                         : 'https://github.com/wanghongenpin/proxypin/wiki/Script'))),
           const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
         ]),

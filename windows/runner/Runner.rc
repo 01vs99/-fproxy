@@ -89,8 +89,8 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "ProxyPin" "\0"
-            VALUE "FileDescription", "Capture HTTP(S) traffic software ProxyPin" "\0"
+            VALUE "CompanyName", "com.proxy.pin" "\0"
+            VALUE "FileDescription", "ProxyPin" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ProxyPin" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 Hongen Wang. All rights reserved." "\0"

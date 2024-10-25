@@ -58,7 +58,7 @@ class About extends StatelessWidget {
                 onTap: () {
                   launchUrl(
                       Uri.parse(
-                          isCN ? "https://gitee.com/wanghongenpin/network-proxy-flutter/releases" : "$gitHub/releases"),
+                          isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases"),
                       mode: LaunchMode.externalApplication);
                 })
           ],

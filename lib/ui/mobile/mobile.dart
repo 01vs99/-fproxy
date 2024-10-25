@@ -158,11 +158,15 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
-          if (didPop || await enterPictureInPicture()) {
+          if (didPop) {
             return;
           }
 
           if (navigationView[_selectIndex.value].onPopInvoked()) {
+            return;
+          }
+
+          if (await enterPictureInPicture()) {
             return;
           }
 
@@ -211,7 +215,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
   Future<bool> enterPictureInPicture() async {
     if (Vpn.isVpnStarted) {
-      if (_selectIndex.value != 0 || !Platform.isAndroid || !(await (AppConfiguration.instance)).pipEnabled.value) {
+      if (!Platform.isAndroid || !(await (AppConfiguration.instance)).pipEnabled.value) {
         return false;
       }
 

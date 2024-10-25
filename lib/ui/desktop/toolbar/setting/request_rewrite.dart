@@ -514,7 +514,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                     0,
                     "launchUrl",
                     isCN
-                        ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                        ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
                         : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite'))),
         ]),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),

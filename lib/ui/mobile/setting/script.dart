@@ -421,9 +421,11 @@ class _ScriptEditState extends State<ScriptEdit> {
                   text: localizations.useGuide,
                   style: const TextStyle(color: Colors.blue, fontSize: 14),
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () => launchUrl(Uri.parse(isCN
-                        ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%84%9A%E6%9C%AC'
-                        : 'https://github.com/wanghongenpin/proxypin/wiki/Script')))),
+                    ..onTap = () => launchUrl(
+                        mode: LaunchMode.externalApplication,
+                        Uri.parse(isCN
+                            ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%84%9A%E6%9C%AC'
+                            : 'https://github.com/wanghongenpin/proxypin/wiki/Script')))),
             ]),
             actions: [
               TextButton(

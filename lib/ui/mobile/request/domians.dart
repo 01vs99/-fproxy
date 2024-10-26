@@ -66,6 +66,8 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   //搜索关键字
   String? searchText;
 
+  bool changing = false;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -102,7 +104,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
 
     view = [...domainList.where(filter)].reversed.toList();
-    setState(() {});
+    changeState();
   }
 
   addResponse(HttpResponse response) {
@@ -149,16 +151,16 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
 
     text = text.toLowerCase();
-    setState(() {
-      var contains = text!.contains(searchText ?? "");
-      searchText = text.toLowerCase();
-      if (contains) {
-        //包含从上次结果过滤
-        view.retainWhere(filter);
-      } else {
-        view = List.of(domainList.where(filter).toList().reversed);
-      }
-    });
+
+    var contains = text.contains(searchText ?? "");
+    searchText = text.toLowerCase();
+    if (contains) {
+      //包含从上次结果过滤
+      view.retainWhere(filter);
+    } else {
+      view = List.of(domainList.where(filter).toList().reversed);
+    }
+    changeState();
   }
 
   bool filter(HostAndPort hostAndPort) {
@@ -166,6 +168,18 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
       return hostAndPort.domain.toLowerCase().contains(searchText!);
     }
     return true;
+  }
+
+  changeState() {
+    //防止频繁刷新
+    if (!changing) {
+      changing = true;
+      Future.delayed(const Duration(milliseconds: 350), () {
+        setState(() {
+          changing = false;
+        });
+      });
+    }
   }
 
   @override

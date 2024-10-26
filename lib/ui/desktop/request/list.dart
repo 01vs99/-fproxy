@@ -529,6 +529,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   late Configuration configuration;
   late bool selected;
   Widget? trailing;
+  bool changing = false;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -541,8 +542,16 @@ class _DomainRequestsState extends State<DomainRequests> {
   }
 
   changeState() {
-    setState(() {});
-    transitionState.currentState?.show();
+    //防止频繁刷新
+    if (!changing) {
+      changing = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          changing = false;
+        });
+        transitionState.currentState?.show();
+      });
+    }
   }
 
   @override

@@ -295,14 +295,12 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
         bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
         String key = keyController.text;
         if (isRemove && key.isNotEmpty) {
-          if (valueController.text.isNotEmpty) {
-            if (rewriteType == RewriteType.removeHeader) {
-              key = '$key: ${valueController.text}';
-            } else {
-              key = '$key=${valueController.text}';
-            }
+          if (rewriteType == RewriteType.removeHeader) {
+            key = '$key: ';
+          } else {
+            key = '$key=';
           }
-          key = '^$key';
+          key = '$key${valueController.text}';
         }
 
         var match = dataController.highlight(key,

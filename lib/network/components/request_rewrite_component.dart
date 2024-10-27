@@ -109,13 +109,14 @@ class RequestRewriteComponent {
           queryParameters[item.key!] = item.value;
           break;
         case RewriteType.removeQueryParam:
-          if (item.value?.isNotEmpty == true) {
+          print(item.value?.trim().isNotEmpty );
+          if (item.value?.trim().isNotEmpty == true) {
             var val = queryParameters[item.key!];
-            if (val != null && item.value != null && RegExp(item.value!).hasMatch(val)) {
-              return;
+            if (val == null || !RegExp(item.value!).hasMatch(val)) {
+              break;
             }
           }
-          queryParameters.remove(item.value);
+          queryParameters.remove(item.key!);
           break;
         case RewriteType.updateQueryParam:
           var itemKey = item.key;
@@ -175,9 +176,9 @@ class RequestRewriteComponent {
     }
 
     if (item.type == RewriteType.removeHeader) {
-      if (item.value?.isNotEmpty == true) {
+      if (item.value?.trim().isNotEmpty == true) {
         var val = message.headers.get(item.key!);
-        if (val != null && item.value != null && RegExp(item.value!).hasMatch(val)) {
+        if (val == null || !RegExp(item.value!).hasMatch(val)) {
           return;
         }
       }

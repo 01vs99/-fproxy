@@ -204,8 +204,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                           onChanged: (val) {
                             setState(() {
                               rewriteType = val!;
-                              initTestData();
                             });
+                            initTestData();
                           })),
                 ],
               ),
@@ -226,6 +226,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   }
 
   initTestData() {
+    dataController.splitPattern = null;
     dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
@@ -245,6 +246,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     }
 
     if (rewriteType == RewriteType.updateQueryParam || rewriteType == RewriteType.removeQueryParam) {
+      dataController.splitPattern = '&';
       dataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
       return;
     }
@@ -270,7 +272,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     onMatch = true;
 
     //高亮显示
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       onMatch = false;
       if (dataController.text.isEmpty) {
         if (isMatch) return;

@@ -258,7 +258,10 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     }
 
     if (rewriteType == RewriteType.updateHeader || rewriteType == RewriteType.removeHeader) {
-      dataController.text = widget.request?.headers.toRawHeaders() ?? '';
+      var headerData = widget.ruleType == RuleType.requestUpdate
+          ? widget.request?.headers.toRawHeaders()
+          : widget.request?.response?.headers.toRawHeaders();
+      dataController.text = headerData ?? '';
       return;
     }
 
@@ -289,14 +292,18 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
         bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
         String key = keyController.text;
         if (isRemove && key.isNotEmpty) {
-          if (rewriteType == RewriteType.removeHeader) {
-            key = '$key: ${valueController.text}';
-          } else {
-            key = '$key=${valueController.text}';
+          if (valueController.text.isNotEmpty) {
+            if (rewriteType == RewriteType.removeHeader) {
+              key = '$key: ${valueController.text}';
+            } else {
+              key = '$key=${valueController.text}';
+            }
           }
+          key = '^$key';
         }
 
-        var match = dataController.highlight(key, caseSensitive: rewriteType != RewriteType.updateHeader);
+        var match = dataController.highlight(key,
+            caseSensitive: rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader);
         isMatch = match;
       });
     });

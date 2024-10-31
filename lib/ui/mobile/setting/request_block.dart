@@ -183,7 +183,7 @@ class RequestBlockAddDialog extends StatelessWidget {
                   SwitchWidget(title: localizations.enable, value: item.enabled, onChanged: (val) => enabled = val),
                   const SizedBox(height: 10),
                   TextFormField(
-                      initialValue: item.url.fixAutoLines(),
+                      initialValue: item.url,
                       maxLines: 3,
                       minLines: 1,
                       decoration: const InputDecoration(

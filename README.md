@@ -17,6 +17,7 @@ and easy to use.
 * Others: Favorites, toolbox, common encoding tools, as well as QR codes, regular expressions, etc.
 
 **Mac will prompt untrusted developers when first opened, you need to go to System Preferences-Security & Privacy-Allow any source.**
+
 Download： https://github.com/wanghongenpin/proxypin/releases
 
 iOS App Store：https://apps.apple.com/app/proxypin/id6450932949

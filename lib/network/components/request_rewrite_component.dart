@@ -109,7 +109,6 @@ class RequestRewriteComponent {
           queryParameters[item.key!] = item.value;
           break;
         case RewriteType.removeQueryParam:
-          print(item.value?.trim().isNotEmpty );
           if (item.value?.trim().isNotEmpty == true) {
             var val = queryParameters[item.key!];
             if (val == null || !RegExp(item.value!).hasMatch(val)) {

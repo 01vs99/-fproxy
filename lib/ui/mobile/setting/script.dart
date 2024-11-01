@@ -455,24 +455,31 @@ class _ScriptEditState extends State<ScriptEdit> {
                   },
                   child: Text(localizations.save)),
             ]),
-        body: Padding(
-            padding: const EdgeInsets.only(left: 15, right: 10, bottom: 20),
-            child: Form(
-                key: formKey,
-                child: ListView(
-                  children: [
-                    textField("${localizations.name}:", nameController, localizations.pleaseEnter),
-                    const SizedBox(height: 10),
-                    textField("URL:", urlController, "github.com/api/*", keyboardType: TextInputType.url),
-                    const SizedBox(height: 10),
-                    Text("${localizations.script}:"),
-                    const SizedBox(height: 5),
-                    CodeTheme(
-                        data: CodeThemeData(styles: monokaiSublimeTheme),
-                        child: SingleChildScrollView(
-                            child: CodeField(textStyle: const TextStyle(fontSize: 14), controller: script)))
-                  ],
-                ))));
+        body: Form(
+            key: formKey,
+            child: ListView(
+              children: [
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: textField("${localizations.name}:", nameController, localizations.pleaseEnter)),
+                const SizedBox(height: 10),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: textField("URL:", urlController, "github.com/api/*", keyboardType: TextInputType.url)),
+                const SizedBox(height: 10),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text("${localizations.script}:")),
+                const SizedBox(height: 5),
+                CodeTheme(
+                    data: CodeThemeData(styles: monokaiSublimeTheme),
+                    child: SingleChildScrollView(
+                        child: CodeField(
+                            textStyle: const TextStyle(fontSize: 13),
+                            enableSuggestions: true,
+                            gutterStyle: const GutterStyle(width: 50, margin: 0),
+                            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                            controller: script)))
+              ],
+            )));
   }
 
   Widget textField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType}) {

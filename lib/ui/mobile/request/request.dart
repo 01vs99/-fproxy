@@ -72,7 +72,7 @@ class RequestRowState extends State<RequestRow> {
   bool selected = false;
   Color? highlightColor; //高亮颜色
 
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
+  AppLocalizations get localizations => AppLocalizations.of(availableContext)!;
 
   change(HttpResponse response) {
     setState(() {
@@ -341,7 +341,9 @@ class RequestRowState extends State<RequestRow> {
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
 
-    FlutterToastr.show(localizations.reSendRequest, availableContext);
+    if (mounted) {
+      FlutterToastr.show(localizations.reSendRequest, context);
+    }
   }
 
   Widget itemButton(

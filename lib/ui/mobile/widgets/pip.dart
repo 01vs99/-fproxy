@@ -95,7 +95,6 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
   static double yPosition = -1;
   static Size? size;
   late final double _top;
-  late final double _right;
   late final double _bottom;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -123,7 +122,6 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
       xPosition = size!.width - 48;
       yPosition = size!.height * 0.35;
       _top = MediaQuery.of(context).padding.top;
-      _right = xPosition;
       _bottom = size!.height - 48 - (AppConfiguration.current?.bottomNavigation == false ? 0 : 56);
     }
 
@@ -136,7 +134,7 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
             // if (yPosition + tapInfo.delta.dy < 0) return;
 
             setState(() {
-              xPosition = (xPosition + tapInfo.delta.dx).clamp(0, _right);
+              xPosition = (xPosition + tapInfo.delta.dx).clamp(0, size!.width);
               yPosition = (yPosition + tapInfo.delta.dy).clamp(_top, _bottom);
             });
           },

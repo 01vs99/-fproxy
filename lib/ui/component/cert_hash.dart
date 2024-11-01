@@ -80,7 +80,7 @@ class _CertHashPageState extends State<CertHashPage> {
             FilledButton.icon(
                 onPressed: () {
                   getSubjectName();
-                  FocusScope.of(context).requestFocus(FocusNode());
+                  FocusScope.of(context).unfocus();
                 },
                 style: buttonStyle,
                 icon: const Icon(Icons.play_arrow_rounded),

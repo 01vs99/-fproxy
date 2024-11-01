@@ -348,25 +348,26 @@ class RequestPageState extends State<RequestPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        floatingActionButton: PictureInPictureIcon(proxyServer),
-        body: Scaffold(
-          appBar: _MobileAppBar(widget.appConfiguration, proxyServer, remoteDevice: remoteDevice),
-          drawer: widget.appConfiguration.bottomNavigation
-              ? null
-              : DrawerWidget(proxyServer: proxyServer, container: MobileApp.container),
-          floatingActionButton: _launchActionButton(),
-          body: ValueListenableBuilder(
-              valueListenable: remoteDevice,
-              builder: (context, value, _) {
-                return Column(children: [
-                  value.connect ? remoteConnect(value) : const SizedBox(),
-                  Expanded(
-                      child: RequestListWidget(
-                          key: MobileApp.requestStateKey, proxyServer: proxyServer, list: MobileApp.container))
-                ]);
-              }),
-        ));
+    return Stack(children: [
+      Scaffold(
+        appBar: _MobileAppBar(widget.appConfiguration, proxyServer, remoteDevice: remoteDevice),
+        drawer: widget.appConfiguration.bottomNavigation
+            ? null
+            : DrawerWidget(proxyServer: proxyServer, container: MobileApp.container),
+        floatingActionButton: _launchActionButton(),
+        body: ValueListenableBuilder(
+            valueListenable: remoteDevice,
+            builder: (context, value, _) {
+              return Column(children: [
+                value.connect ? remoteConnect(value) : const SizedBox(),
+                Expanded(
+                    child: RequestListWidget(
+                        key: MobileApp.requestStateKey, proxyServer: proxyServer, list: MobileApp.container))
+              ]);
+            }),
+      ),
+      PictureInPictureIcon(proxyServer),
+    ]);
   }
 
   Widget _launchActionButton() {

@@ -22,6 +22,8 @@
 
 iOS AppStore下载地址： https://apps.apple.com/app/proxypin/id6450932949      
 
+Android Google Play：https://play.google.com/store/apps/details?id=com.network.proxy
+
 TG: https://t.me/proxypin_tg
 
 **接下来会持续完善功能和体验，UI优化。**

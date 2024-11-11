@@ -1,7 +1,7 @@
 # ProxyPin
 
 English | [中文](README_CN.md)
-## Open source free packet capture tool，Support Windows、Mac、Android、IOS、Linux Full platform system
+## Open source free traffic capture HTTP(S)，Support Windows、Mac、Android、IOS、Linux Full platform system
 
 You can use it to intercept, inspect & rewrite HTTP(S) traffic, Support capturing Flutter app traffic, ProxyPin is based on Flutter develop, and the UI is beautiful
 and easy to use.
@@ -21,6 +21,8 @@ and easy to use.
 Download： https://github.com/wanghongenpin/proxypin/releases
 
 iOS App Store：https://apps.apple.com/app/proxypin/id6450932949
+
+Android Google Play：https://play.google.com/store/apps/details?id=com.network.proxy
 
 TG: https://t.me/proxypin_en
 

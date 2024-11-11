@@ -17,14 +17,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -124,16 +124,15 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
                         onPressed: refresh,
                         icon: const Icon(Icons.refresh, color: Colors.blue),
                         tooltip: localizations.refresh),
-                    const SizedBox(width: 30),
-                    FilledButton.icon(
+                    const SizedBox(width: 10),
+                    TextButton.icon(
                       icon: const Icon(Icons.add, size: 18),
-                      label: Text(localizations.add, style: const TextStyle(fontSize: 12)),
+                      label: Text(localizations.add),
                       onPressed: add,
                     ),
-                    const SizedBox(width: 20),
-                    FilledButton.icon(
+                    const SizedBox(width: 5),
+                    TextButton.icon(
                       icon: const Icon(Icons.input_rounded, size: 18),
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.only(left: 20, right: 20)),
                       onPressed: import,
                       label: Text(localizations.import),
                     )
@@ -154,14 +153,16 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   import() async {
-    String? file = await DesktopMultiWindow.invokeMethod(0, 'openFile', 'config');
-    WindowController.fromWindowId(widget.windowId).show();
-    if (file == null) {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
 
+    var file = result.files.single;
+
     try {
-      List json = jsonDecode(await File(file).readAsString());
+      List json = jsonDecode(await File(file.path!).readAsString());
       for (var item in json) {
         var rule = RequestRewriteRule.formJson(item);
         var items = (item['items'] as List).map((e) => RewriteItem.fromJson(e)).toList();
@@ -206,7 +207,8 @@ class RequestRuleList extends StatefulWidget {
 class _RequestRuleListState extends State<RequestRuleList> {
   Map<int, bool> selected = {};
   late List<RequestRewriteRule> rules;
-  bool isPress = false;
+  bool isPressed = false;
+  Offset? lastPressPosition;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -219,7 +221,12 @@ class _RequestRuleListState extends State<RequestRuleList> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onSecondaryTapDown: (details) => showGlobalMenu(details.globalPosition),
+        onSecondaryTap: () {
+          if (lastPressPosition == null) {
+            return;
+          }
+          showGlobalMenu(lastPressPosition!);
+        },
         onTapDown: (details) {
           if (selected.isEmpty) {
             return;
@@ -232,8 +239,13 @@ class _RequestRuleListState extends State<RequestRuleList> {
           });
         },
         child: Listener(
-            onPointerUp: (details) => isPress = false,
-            onPointerDown: (details) => isPress = true,
+            onPointerUp: (event) => isPressed = false,
+            onPointerDown: (event) {
+              lastPressPosition = event.localPosition;
+              if (event.buttons == kPrimaryMouseButton) {
+                isPressed = true;
+              }
+            },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 constraints: const BoxConstraints(maxHeight: 600, minHeight: 550),
@@ -292,7 +304,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
           onSecondaryTapDown: (details) => showMenus(details, index),
           onDoubleTap: () => showEdit(index),
           onHover: (hover) {
-            if (isPress && selected[index] != true) {
+            if (isPressed && selected[index] != true) {
               setState(() {
                 selected[index] = true;
               });
@@ -314,7 +326,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
           },
           child: Container(
               color: selected[index] == true
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withOpacity(0.6)
                   : index.isEven
                       ? Colors.grey.withOpacity(0.1)
                       : null,
@@ -350,9 +362,8 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
-    String? saveLocation = await DesktopMultiWindow.invokeMethod(0, 'getSaveLocation', fileName);
-    WindowController.fromWindowId(widget.windowId).show();
-    if (saveLocation == null) {
+    var path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
       return;
     }
 
@@ -365,8 +376,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
       list.add(json);
     }
 
-    final XFile xFile = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'json');
-    await xFile.saveTo(saveLocation);
+    await File(path).writeAsBytes(utf8.encode(jsonEncode(list)));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 
@@ -416,9 +426,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
       showGlobalMenu(details.globalPosition);
       return;
     }
-    setState(() {
-      selected[index] = true;
-    });
+    // setState(() {
+    //   selected[index] = true;
+    // });
     showContextMenu(context, details.globalPosition, items: [
       PopupMenuItem(height: 35, child: Text(localizations.edit), onTap: () => showEdit(index)),
       PopupMenuItem(height: 35, onTap: () => export([index]), child: Text(localizations.export)),
@@ -438,9 +448,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
             MultiWindow.invokeRefreshRewrite(Operation.delete, index: index);
           })
     ]).then((value) {
-      setState(() {
-        selected.remove(index);
-      });
+      // setState(() {
+      //   selected.remove(index);
+      // });
     });
   }
 }
@@ -521,7 +531,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
             width: 550,
-            constraints: const BoxConstraints(minHeight: 200,maxHeight: 550),
+            constraints: const BoxConstraints(minHeight: 200, maxHeight: 550),
             child: Form(
                 key: formKey,
                 child: Column(

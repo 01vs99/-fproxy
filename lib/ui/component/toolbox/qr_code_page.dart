@@ -59,12 +59,29 @@ class _QrCodePageState extends State<QrCodePage> with SingleTickerProviderStateM
     if (Platforms.isMobile()) {
       tabController = TabController(initialIndex: 0, length: tabs.length, vsync: this);
     }
+    
+    if (Platforms.isDesktop() && widget.windowId != null) {
+      HardwareKeyboard.instance.addHandler(onKeyEvent);
+    }
   }
 
   @override
   void dispose() {
     tabController?.dispose();
+    HardwareKeyboard.instance.removeHandler(onKeyEvent);
     super.dispose();
+  }
+
+  bool onKeyEvent(KeyEvent event) {
+    if (widget.windowId == null) return false;
+    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+        event.logicalKey == LogicalKeyboardKey.keyW) {
+      HardwareKeyboard.instance.removeHandler(onKeyEvent);
+      WindowController.fromWindowId(widget.windowId!).close();
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -203,9 +220,10 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
     }
 
     if (Platforms.isDesktop()) {
-      String? file = await DesktopMultiWindow.invokeMethod(0, 'pickFile', <String>['jpg', 'png', 'jpeg']);
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-      return file;
+      //<String>['jpg', 'png', 'jpeg']
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+      if (result == null || result.files.isEmpty) return null;
+      return result.files.single.path;
     }
 
     return null;

@@ -15,20 +15,24 @@
  */
 
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:basic_utils/basic_utils.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/ui/component/buttons.dart';
 import 'package:proxypin/ui/component/text_field.dart';
+import 'package:proxypin/utils/platform.dart';
 
 ///证书哈希名称查看
 ///@author Hongen Wang
 class CertHashPage extends StatefulWidget {
-  const CertHashPage({super.key});
+  final int? windowId;
+
+  const CertHashPage({super.key, this.windowId});
 
   @override
   State<StatefulWidget> createState() {
@@ -43,10 +47,31 @@ class _CertHashPageState extends State<CertHashPage> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
+  void initState() {
+    super.initState();
+    if (Platforms.isDesktop() && widget.windowId != null) {
+      HardwareKeyboard.instance.addHandler(onKeyEvent);
+    }
+  }
+
+  @override
   void dispose() {
     input.dispose();
     decodeData.dispose();
+    HardwareKeyboard.instance.removeHandler(onKeyEvent);
     super.dispose();
+  }
+
+  bool onKeyEvent(KeyEvent event) {
+    if (widget.windowId == null) return false;
+    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+        event.logicalKey == LogicalKeyboardKey.keyW) {
+      HardwareKeyboard.instance.removeHandler(onKeyEvent);
+      WindowController.fromWindowId(widget.windowId!).close();
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -67,13 +92,13 @@ class _CertHashPageState extends State<CertHashPage> {
                   input.text = tryDerFormat(bytes) ?? String.fromCharCodes(bytes);
                   getSubjectName();
                 },
-                style: buttonStyle,
+                style: Buttons.buttonStyle,
                 icon: const Icon(Icons.folder_open),
                 label: Text("File")),
             const SizedBox(width: 15),
             ElevatedButton.icon(
                 onPressed: () => input.clear(),
-                style: buttonStyle,
+                style: Buttons.buttonStyle,
                 icon: const Icon(Icons.clear),
                 label: const Text("Clear")),
             const SizedBox(width: 15),
@@ -82,7 +107,7 @@ class _CertHashPageState extends State<CertHashPage> {
                   getSubjectName();
                   FocusScope.of(context).unfocus();
                 },
-                style: buttonStyle,
+                style: Buttons.buttonStyle,
                 icon: const Icon(Icons.play_arrow_rounded),
                 label: const Text("Run")),
             const SizedBox(width: 15),
@@ -99,7 +124,8 @@ class _CertHashPageState extends State<CertHashPage> {
                   decoration: decoration(context, label: localizations.inputContent))),
           Align(
               alignment: Alignment.bottomLeft,
-              child: TextButton(onPressed: () {}, child: const Text("Output:", style: TextStyle(fontSize: 16)))),
+              child: TextButton(
+                  onPressed: () {}, child: Text("${localizations.output}:", style: TextStyle(fontSize: 16)))),
           Container(
               width: double.infinity,
               padding: const EdgeInsets.all(10),
@@ -117,9 +143,8 @@ class _CertHashPageState extends State<CertHashPage> {
     if (content.isEmpty) return;
     try {
       var caCert = X509Utils.x509CertificateFromPem(content);
-      var subject = caCert.tbsCertificate?.subject;
-      if (subject == null) return;
-      var subjectHashName = X509Generate.getSubjectHashName(subject);
+      var subject = caCert.subject;
+      var subjectHashName = X509Utils.getSubjectHashName(subject);
       decodeData.text = '$subjectHashName.0';
     } catch (e) {
       FlutterToastr.show(localizations.decodeFail, context, duration: 3, backgroundColor: Colors.red);
@@ -140,10 +165,4 @@ class _CertHashPageState extends State<CertHashPage> {
       return null;
     }
   }
-
-  ButtonStyle get buttonStyle => ButtonStyle(
-      padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
-      textStyle: WidgetStateProperty.all<TextStyle>(TextStyle(fontSize: 14)),
-      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
 }

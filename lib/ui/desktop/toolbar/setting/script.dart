@@ -18,7 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,7 +27,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -110,7 +110,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
                                     subtitle: Text(localizations.scriptUseDescribe),
                                     trailing: SwitchWidget(
                                         value: data.enabled,
-                                        scale: 0.9,
+                                        scale: 0.8,
                                         onChanged: (value) {
                                           data.enabled = value;
                                           _refreshScript();
@@ -120,18 +120,18 @@ class _ScriptWidgetState extends State<ScriptWidget> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 const SizedBox(width: 10),
-                                FilledButton.icon(
+                                TextButton.icon(
                                     icon: const Icon(Icons.add, size: 18),
                                     onPressed: scriptAdd,
                                     label: Text(localizations.add)),
                                 const SizedBox(width: 10),
-                                FilledButton.icon(
+                                TextButton.icon(
                                   icon: const Icon(Icons.input_rounded, size: 18),
                                   onPressed: import,
                                   label: Text(localizations.import),
                                 ),
                                 const SizedBox(width: 10),
-                                FilledButton.icon(
+                                TextButton.icon(
                                   icon: const Icon(Icons.terminal, size: 18),
                                   onPressed: consoleLog,
                                   label: Text(localizations.logger),
@@ -151,14 +151,13 @@ class _ScriptWidgetState extends State<ScriptWidget> {
 
   //导入js
   import() async {
-    String? file = await DesktopMultiWindow.invokeMethod(0, 'openFile', 'json');
-    WindowController.fromWindowId(widget.windowId).show();
-    if (file == null) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
-
+    var file = result.files.single.path;
     try {
-      var json = jsonDecode(await File(file).readAsString());
+      var json = jsonDecode(await File(file!).readAsString());
       var scriptManager = (await ScriptManager.instance);
       if (json is List<dynamic>) {
         for (var item in json) {
@@ -442,7 +441,8 @@ class ScriptList extends StatefulWidget {
 
 class _ScriptListState extends State<ScriptList> {
   Set<int> selected = {};
-  bool isPress = false;
+  bool isPressed = false;
+  Offset? lastPressPosition;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -462,8 +462,13 @@ class _ScriptListState extends State<ScriptList> {
           });
         },
         child: Listener(
-            onPointerUp: (details) => isPress = false,
-            onPointerDown: (details) => isPress = true,
+            onPointerUp: (event) => isPressed = false,
+            onPointerDown: (event) {
+              lastPressPosition = event.localPosition;
+              if (event.buttons == kPrimaryMouseButton) {
+                isPressed = true;
+              }
+            },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 height: 530,
@@ -496,7 +501,7 @@ class _ScriptListState extends State<ScriptList> {
           onDoubleTap: () => showEdit(index),
           onSecondaryTapDown: (details) => showMenus(details, index),
           onHover: (hover) {
-            if (isPress && !selected.contains(index)) {
+            if (isPressed && !selected.contains(index)) {
               setState(() {
                 selected.add(index);
               });
@@ -518,7 +523,7 @@ class _ScriptListState extends State<ScriptList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withOpacity(0.6)
                   : index.isEven
                       ? Colors.grey.withOpacity(0.1)
                       : null,
@@ -616,9 +621,8 @@ class _ScriptListState extends State<ScriptList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'proxypin-scripts.json';
-    String? saveLocation = await DesktopMultiWindow.invokeMethod(0, 'getSaveLocation', fileName);
-    WindowController.fromWindowId(widget.windowId).show();
-    if (saveLocation == null) {
+    String? path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
       return;
     }
     var scriptManager = await ScriptManager.instance;
@@ -631,8 +635,7 @@ class _ScriptListState extends State<ScriptList> {
       json.add(map);
     }
 
-    final XFile xFile = XFile.fromData(utf8.encode(jsonEncode(json)), mimeType: 'json');
-    await xFile.saveTo(saveLocation);
+    await File(path).writeAsBytes(utf8.encode(jsonEncode(json)));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 

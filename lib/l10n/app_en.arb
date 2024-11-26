@@ -187,6 +187,8 @@
   "installRootCa": "Install Certificate",
   "installCaLocal": "Install Certificate to Local-Machine",
   "downloadRootCa": "Download Certificate",
+  "downloadRootCaNote": "Note: If you set the default browser to other than Safari, click this line to copy and paste the link to Safari browser",
+  "copyRootCaSuccess": "Copy link success",
   "generateCA": "Generate new root certificate",
   "generateCADescribe": "Are you sure you want to generate a new root certificate? If confirmed,\nYou need to reinstall and trust the new certificate",
   "resetDefaultCA": "Reset Default Root Certificate",

@@ -141,7 +141,7 @@ class HttpClients {
     Channel channel =
         await proxyConnect(proxyInfo: proxyInfo, request.hostAndPort!, httpResponseHandler, channelContext);
 
-    if (channel.isSsl && !request.uri.startsWith("/")) {
+    if (!request.uri.startsWith("/")) {
       Uri? uri = request.requestUri;
       request = request.copy(uri: '${uri!.path}${uri.hasQuery ? '?${uri.query}' : ''}');
     }

@@ -229,7 +229,8 @@ class HttpRequestCodec extends HttpCodec<HttpRequest> {
     String uri = message.uri;
 
     //http scheme 输入地址和host不一致
-    if (uri.startsWith(HostAndPort.httpScheme) && message.requestUri?.host != message.headers.host) {
+    if (uri.startsWith(HostAndPort.httpScheme) &&
+        (message.requestUri?.host != message.headers.host && message.headers.host?.contains(':') != true)) {
       uri = message.requestUri?.replace(host: message.headers.host).toString() ?? uri;
     }
 

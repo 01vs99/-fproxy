@@ -232,7 +232,7 @@ class _MobileSslState extends State<MobileSslWidget> {
       if (!mounted) {
         return;
       }
-      FlutterToastr.show(localizations.copyRootCaSuccess, context);
+      FlutterToastr.show(localizations.copied, context);
     });
   }
 

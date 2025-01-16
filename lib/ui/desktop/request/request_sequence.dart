@@ -125,8 +125,14 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
     return futureWidget(
         processInfo.getIcon(),
-        (data) =>
-            data.isEmpty ? const SizedBox() : Image.memory(data, width: 23, height: Platform.isWindows ? 16 : null));
+        (data) => data.isEmpty
+            ? const SizedBox()
+            : Image.memory(
+                data,
+                width: 23,
+                height: Platform.isWindows ? 16 : null,
+                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => const SizedBox(),
+              ));
   }
 
   ///高亮处理

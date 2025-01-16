@@ -157,7 +157,7 @@ class ProcessInfo {
         icon = (await InstalledApps.getAppInfo(id)).icon;
       }
 
-      if (Platform.operatingSystem == os || path.endsWith('.exe')) {
+      if ('windows' == os || path.endsWith('.exe')) {
         icon = await _getWindowsIcon(path);
       }
 

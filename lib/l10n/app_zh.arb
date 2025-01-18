@@ -151,6 +151,8 @@
   "editRequest": "编辑请求",
   "reSendRequest": "已重新发送请求",
   "viewExport": "视图导出",
+  "timeDesc": "按时间降序",
+  "timeAsc": "按时间升序",
 
   "search": "搜索",
   "clearSearch": "清除搜索",

@@ -137,8 +137,10 @@ class Server extends Network {
   void ssl(ChannelContext channelContext, Channel channel, Uint8List data) async {
     var hostAndPort = channelContext.host;
     try {
+      String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
+
       if (hostAndPort == null) {
-        var domain = TLS.getDomain(data);
+        var domain = serviceName;
         var port = 443;
         if (domain == null) {
           var process = await ProcessInfoUtils.getProcessByPort(
@@ -163,11 +165,11 @@ class Server extends Network {
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : null;
-        await remoteChannel.secureSocket(channelContext, host: hostAndPort.host, supportedProtocols: supportProtocols);
+        await remoteChannel.secureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
       //ssl自签证书
-      var certificate = await CertificateManager.getCertificateContext(hostAndPort.host);
+      var certificate = await CertificateManager.getCertificateContext(serviceName!);
       var selectedProtocol = remoteChannel?.selectedProtocol;
       if (selectedProtocol != null) certificate.setAlpnProtocols([selectedProtocol], true);
 

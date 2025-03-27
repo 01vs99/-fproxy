@@ -342,7 +342,11 @@ class HttpStatus {
   /// 504 Gateway Timeout
   static final HttpStatus gatewayTimeout = newStatus(504, "Gateway Timeout");
 
-  static HttpStatus newStatus(int statusCode, String reasonPhrase) {
+  static HttpStatus newStatus(int statusCode, String? reasonPhrase) {
+    if (reasonPhrase == null) {
+      return HttpStatus.valueOf(statusCode);
+    }
+
     return HttpStatus(statusCode, reasonPhrase);
   }
 

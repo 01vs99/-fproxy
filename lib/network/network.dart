@@ -197,7 +197,7 @@ class Client extends Network {
     String host = hostAndPort.host;
     //说明支持ipv6
     if (host.startsWith("[") && host.endsWith(']')) {
-      host = host.substring(host.lastIndexOf(":") + 1, host.length - 1);
+      host = host.substring(1, host.length - 1);
     }
 
     return Socket.connect(host, hostAndPort.port, timeout: timeout).then((socket) {

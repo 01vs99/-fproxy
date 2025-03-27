@@ -136,7 +136,7 @@ class Har {
     List headers = request['headers'];
 
     var httpRequest = HttpRequest(HttpMethod.valueOf(method), request['url'], protocolVersion: request['httpVersion']);
-    if (har.containsKey("_id")) httpRequest.requestId = har['_id']; // 页面标识
+    if (har.containsKey("_id")) httpRequest.requestId = har['_id'].toString(); // 页面标识
     httpRequest.processInfo = har['_app'] == null ? null : ProcessInfo.fromJson(har['_app']);
     httpRequest.body = request['postData']?['text']?.toString().codeUnits;
     for (var element in headers) {

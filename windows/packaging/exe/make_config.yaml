@@ -4,6 +4,7 @@ publisher_url: https://github.com/wanghongenpin/proxypin
 display_name: ProxyPin
 create_desktop_icon: true
 install_dir_name: "{autopf64}\\ProxyPin"
+setup_icon_file: windows\runner\resources\app_icon.ico
 locales:
   - en
   - zh

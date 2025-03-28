@@ -38,6 +38,14 @@ import 'network/util/logger.dart';
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  //多窗口
+  if (args.firstOrNull == 'multi_window') {
+    final windowId = int.parse(args[1]);
+    final argument = args[2].isEmpty ? const {} : jsonDecode(args[2]) as Map<String, dynamic>;
+    runApp(FluentApp(multiWindow(windowId, argument), (await AppConfiguration.instance)));
+    return;
+  }
+
   if (Platform.isWindows) {
     await WindowsSingleInstance.ensureSingleInstance([], "ProxyPin", onSecondWindow: (args) {
       logger.d('WindowsSingleInstance onSecondWindow $args');
@@ -46,14 +54,6 @@ void main(List<String> args) async {
   }
 
   var instance = AppConfiguration.instance;
-  //多窗口
-  if (args.firstOrNull == 'multi_window') {
-    final windowId = int.parse(args[1]);
-    final argument = args[2].isEmpty ? const {} : jsonDecode(args[2]) as Map<String, dynamic>;
-    runApp(FluentApp(multiWindow(windowId, argument), (await instance)));
-    return;
-  }
-
   var configuration = Configuration.instance;
   //移动端
   if (Platforms.isMobile()) {

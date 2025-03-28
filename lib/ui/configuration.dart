@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -93,9 +92,14 @@ class AppConfiguration {
 
   static Future<AppConfiguration> get instance async {
     if (_instance == null) {
-      AppConfiguration configuration = AppConfiguration._();
-      await configuration.initConfig();
-      _instance = configuration;
+      try {
+        AppConfiguration configuration = AppConfiguration._();
+        await configuration.initConfig();
+        _instance = configuration;
+      } catch (e) {
+        logger.e("load config error: $e");
+        _instance = AppConfiguration._();
+      }
     }
     return _instance!;
   }
@@ -145,7 +149,7 @@ class AppConfiguration {
   Future<File> get _path async {
     if (Platforms.isDesktop()) {
       var userHome = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-      return File('$userHome/.proxypin/ui_config.json');
+      return File('$userHome${Platform.pathSeparator}.proxypin${Platform.pathSeparator}ui_config.json');
     }
 
     final directory = await getApplicationSupportDirectory();
@@ -225,13 +229,10 @@ class AppConfiguration {
       'upgradeNoticeV17': upgradeNoticeV17,
       "language": _language?.languageCode,
       "headerExpanded": headerExpanded,
-
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
-
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,
       if (Platforms.isMobile()) 'bottomNavigation': bottomNavigation,
-
       if (Platforms.isDesktop())
         "windowSize": windowSize == null ? null : {"width": windowSize?.width, "height": windowSize?.height},
       if (Platforms.isDesktop())

@@ -412,17 +412,18 @@ class _DomainRequestsState extends State<DomainRequests> {
     if (!changing) {
       changing = true;
       Future.delayed(const Duration(milliseconds: 500), () {
-        setState(() {
-          changing = false;
-        });
-        transitionState.currentState?.show();
+        if (mounted) {
+          setState(() {
+            changing = false;
+          });
+          transitionState.currentState?.show();
+        }
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Column(children: [
       _hostWidget(widget.domain),
       Offstage(offstage: !selected, child: Column(children: widget.body.toList()))

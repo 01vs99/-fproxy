@@ -17,9 +17,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/channel.dart';
-import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';

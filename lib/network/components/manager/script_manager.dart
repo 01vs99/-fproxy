@@ -252,9 +252,7 @@ async function onResponse(context, request, response) {
         }
         request.attributes['scriptContext'] = result['scriptContext'];
         scriptSession = result['scriptContext']['session'] ?? {};
-        var httpRequest = convertHttpRequest(request, result);
-
-        return httpRequest;
+        request = convertHttpRequest(request, result);
       }
     }
     return request;
@@ -283,7 +281,7 @@ async function onResponse(context, request, response) {
           return null;
         }
         scriptSession = result['scriptContext']['session'] ?? {};
-        return convertHttpResponse(response, result);
+        response = convertHttpResponse(response, result);
       }
     }
     return response;

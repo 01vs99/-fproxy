@@ -204,7 +204,7 @@ class RequestEditorState extends State<RequestEditor> {
                     onPressed: () {
                       try {
                         setState(() {
-                          request = parseCurl(text!);
+                          request = Curl.parse(text!);
                           requestKey.currentState?.change(request!);
                           requestLineKey.currentState?.change(request?.requestUrl, request?.method.name);
                         });

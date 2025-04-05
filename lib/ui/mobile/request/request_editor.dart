@@ -102,7 +102,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                     onPressed: () {
                       try {
                         setState(() {
-                          request = parseCurl(text!);
+                          request = Curl.parse(text!);
                           requestKey.currentState?.change(request!);
                           requestLineKey.currentState?.change(request?.requestUrl, request?.method.name);
                         });
@@ -193,12 +193,13 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
       responseKey.currentState?.change(response);
       responseChange.value = 1;
 
-      tabController.animateTo(1);
       // FlutterToastr.show(localizations.requestSuccess, context);
     }).catchError((e) {
       responseChange.value = -1;
       FlutterToastr.show('${localizations.fail}$e', context);
     });
+
+    tabController.animateTo(1);
   }
 }
 

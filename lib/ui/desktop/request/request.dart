@@ -36,6 +36,7 @@ import 'package:proxypin/ui/desktop/request/repeat.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
 import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -131,7 +132,7 @@ class _RequestWidgetState extends State<RequestWidget> {
       return highlightColor;
     }
 
-    return DesktopKeywordHighlight.getHighlightColor(path);
+    return KeywordHighlights.getHighlightColor(path);
   }
 
   void changeState() {

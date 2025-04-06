@@ -132,10 +132,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
           data.hostAndPort?.host = data.headers.host!;
         }
 
-        if (data.method != HttpMethod.connect) {
-          data.processInfo ??=
-              await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, data.remoteDomain()!);
-        }
+        data.processInfo ??= await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, data.remoteDomain()!);
       }
 
       if (data is HttpResponse) {

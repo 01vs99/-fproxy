@@ -35,7 +35,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
-import 'package:proxypin/ui/desktop/widgets/highlight.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 /// 左侧域名
@@ -103,12 +103,12 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
         highlightHandler();
       });
     };
-    DesktopKeywordHighlight.keywordsController.addListener(highlightListener);
+    KeywordHighlights.addListener(highlightListener);
   }
 
   @override
   dispose() {
-    DesktopKeywordHighlight.keywordsController.removeListener(highlightListener);
+    KeywordHighlights.removeListener(highlightListener);
     super.dispose();
   }
 

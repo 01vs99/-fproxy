@@ -24,7 +24,7 @@ import 'package:path_provider/path_provider.dart';
 
 /// @author wanghongen
 /// 2024/1/1
-class ThemeModel {
+class ColorMapping {
   static final Map<String, Color> colors = {
     "Blue": Colors.blue,
     "Pink": Colors.pink,
@@ -38,6 +38,16 @@ class ThemeModel {
     "Grey": Colors.grey,
   };
 
+  static Color getColor(String colorName) {
+    return colors[colorName] ?? Colors.blue;
+  }
+
+  static String getColorName(Color color) {
+    return colors.entries.firstWhere((entry) => entry.value == color).key;
+  }
+}
+
+class ThemeModel {
   ThemeMode mode;
   bool useMaterial3;
   String color = "Blue";
@@ -49,7 +59,7 @@ class ThemeModel {
         useMaterial3: useMaterial3 ?? this.useMaterial3,
       );
 
-  Color get themeColor => colors[color] ?? Colors.blue;
+  Color get themeColor => ColorMapping.colors[color] ?? Colors.blue;
 }
 
 class AppConfiguration {
@@ -128,7 +138,7 @@ class AppConfiguration {
   Color get themeColor => _theme.themeColor;
 
   set setThemeColor(String colorName) {
-    var color = ThemeModel.colors[colorName];
+    var color = ColorMapping.colors[colorName];
     if (color == null || color == themeColor) return;
 
     _theme.color = colorName;

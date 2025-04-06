@@ -38,6 +38,7 @@ import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/navigator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -92,7 +93,7 @@ class RequestRowState extends State<RequestRow> {
       return highlightColor;
     }
 
-    return KeywordHighlight.getHighlightColor(url);
+    return KeywordHighlights.getHighlightColor(url);
   }
 
   BuildContext getContext() => mounted ? super.context : NavigatorHelper().context;

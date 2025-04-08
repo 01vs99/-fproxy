@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/javascript_runtime.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/utils/platform.dart';
 
 /*
  * Based on bits and pieces from different OSS sources
@@ -232,22 +237,54 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
     return dartContext[XHR_PENDING_CALLS_KEY];
   }
 
-  bool hasPendingXhrCalls() => getPendingXhrCalls()!.length > 0;
+  bool hasPendingXhrCalls() => getPendingXhrCalls()!.isNotEmpty;
 
   void clearXhrPendingCalls() {
     dartContext[XHR_PENDING_CALLS_KEY] = [];
   }
 
-   Future<void> enableFetch2() async {
-     enableXhr2();
+  Future<void> enableFetch2({bool enabledProxy = false}) async {
+    enableXhr2(enabledProxy: enabledProxy);
     final fetchPolyfill = await FileRead.readAsString('assets/js/fetch.js');
     final evalFetchResult = evaluate(fetchPolyfill);
-     logger.d('Eval Fetch Result: $evalFetchResult');
+    logger.d('Eval Fetch Result: $evalFetchResult');
   }
 
+  Future<http.Client> createClient(enabledProxy) async {
+    if (!enabledProxy) {
+      return http.Client();
+    }
 
-  JavascriptRuntime enableXhr2() {
-    httpClient = httpClient ?? http.Client();
+    // ProxyServer.current.isRunning
+    var httpClient = HttpClient();
+    print(ProxyServer.current?.isRunning);
+    String proxy;
+    if (Platforms.isDesktop()) {
+      Map? proxyResult = await DesktopMultiWindow.invokeMethod(0, 'getProxyInfo');
+      if (proxyResult == null) {
+        return http.Client();
+      }
+      proxy = "${proxyResult['host']}:${proxyResult['port']}";
+    } else {
+      if (ProxyServer.current?.isRunning == true) {
+        proxy = "127.0.0.1:${ProxyServer.current!.port}";
+      } else {
+        return http.Client();
+      }
+    }
+
+    httpClient.findProxy = (uri) {
+      return "PROXY $proxy";
+    };
+
+    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+
+    // 创建一个 IOClient 实例，将 HttpClient 传入
+    return IOClient(httpClient);
+  }
+
+  void enableXhr2({bool enabledProxy = false}) async {
+    httpClient = httpClient ?? await createClient(enabledProxy);
     dartContext[XHR_PENDING_CALLS_KEY] = [];
 
     Timer.periodic(Duration(milliseconds: 40), (timer) {
@@ -394,7 +431,6 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
         if (_XHR_DEBUG) print('Exception calling sendNative on Dart: >>>> $e');
       }
     });
-    return this;
   }
 }
 

@@ -48,7 +48,7 @@ class _JavaScriptState extends State<JavaScript> {
     channelCallbacks!["ConsoleLog"] = consoleLog;
     Md5Bridge.registerMd5(flutterJs!);
     FileBridge.registerFile(flutterJs!);
-    flutterJs?.enableFetch2();
+    flutterJs?.enableFetch2(enabledProxy: true);
 
     code = CodeController(language: javascript, text: 'console.log("Hello, World!")');
   }

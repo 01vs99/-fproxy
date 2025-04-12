@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +15,9 @@ import 'package:proxypin/network/components/js/md5.dart';
 import 'package:proxypin/network/components/js/xhr.dart';
 
 class JavaScript extends StatefulWidget {
-  const JavaScript({super.key});
+  final int? windowId;
+
+  const JavaScript({super.key, this.windowId});
 
   @override
   State<StatefulWidget> createState() {
@@ -88,10 +91,20 @@ class _JavaScriptState extends State<JavaScript> {
               //选择文件
               ElevatedButton.icon(
                   onPressed: () async {
-                    FilePickerResult? result =
-                        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
-                    if (result != null) {
-                      File file = File(result.files.single.path!);
+                    String? path;
+                    if (Platform.isMacOS) {
+                      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+                        "allowedExtensions": ['js']
+                      });
+                      WindowController.fromWindowId(widget.windowId!).show();
+                    } else {
+                      FilePickerResult? result =
+                          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
+                      path = result?.files.single.path;
+                    }
+
+                    if (path != null) {
+                      File file = File(path);
                       String content = await file.readAsString();
                       code.text = content;
                       setState(() {});

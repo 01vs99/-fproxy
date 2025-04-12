@@ -349,17 +349,22 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       return;
     }
 
-    if (Platforms.isDesktop()) {
-      String? path = (await FilePicker.platform.saveFile(fileName: "qrcode.png"));
-      if (path == null) return;
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "qrcode.png"});
+      WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      path = (await FilePicker.platform.saveFile(fileName: "qrcode.png"));
+    }
 
-      var imageBytes = await toImageBytes();
-      if (imageBytes == null) return;
+    if (path == null) return;
 
-      await File(path).writeAsBytes(imageBytes);
-      if (mounted) {
-        FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
-      }
+    var imageBytes = await toImageBytes();
+    if (imageBytes == null) return;
+
+    await File(path).writeAsBytes(imageBytes);
+    if (mounted) {
+      FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
     }
   }
 

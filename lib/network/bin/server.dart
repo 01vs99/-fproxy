@@ -69,7 +69,9 @@ class ProxyServer {
       return;
     }
 
-    SystemProxy.setSslProxyEnable(enableSsl, port);
+    if (configuration.enableSystemProxy) {
+      SystemProxy.setSslProxyEnable(enableSsl, port);
+    }
   }
 
   /// 启动代理服务

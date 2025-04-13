@@ -113,12 +113,12 @@ class CustomToast extends StatelessWidget {
       type: type._toastificationType,
       alignment: Alignment.bottomLeft,
       autoCloseDuration: duration,
-      style: ToastificationStyle.fillColored,
+      style: ToastificationStyle.flat,
       pauseOnHover: true,
       showProgressBar: false,
       dragToClose: true,
       closeOnClick: true,
-      closeButtonShowType: CloseButtonShowType.onHover,
+      closeButton: ToastCloseButton(showType: CloseButtonShowType.onHover),
     );
   }
 }

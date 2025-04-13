@@ -56,7 +56,7 @@ class AppUpdateRepository {
     } catch (e) {
       logger.e("Error checking for updates: $e");
       if (showToast) {
-        AppAlertDialog(message: e.toString()).show(context);
+        CustomToast.error(e.toString()).show(context);
       }
     }
   }

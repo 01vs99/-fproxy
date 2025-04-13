@@ -50,7 +50,7 @@ class ColorMapping {
 class ThemeModel {
   ThemeMode mode;
   bool useMaterial3;
-  String color = "Blue";
+  String color = "Pink";
 
   ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true});
 

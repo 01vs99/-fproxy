@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.5.3
   image_pickers: ^2.0.6
   url_launcher: ^6.3.1
+  toastification: ^3.0.2
 
   qr_flutter: ^4.1.0
   flutter_qr_reader_copy: ^1.0.9

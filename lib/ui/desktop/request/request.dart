@@ -29,6 +29,7 @@ import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -296,7 +297,7 @@ class _RequestWidgetState extends State<RequestWidget> {
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo);
 
-    FlutterToastr.show(localizations.reSendRequest, rootNavigator: true, context);
+    CustomToast.success(localizations.reSendRequest).show(context);
   }
 
   PopupMenuItem popupItem(String text, {VoidCallback? onTap}) {

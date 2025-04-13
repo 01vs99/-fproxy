@@ -316,7 +316,7 @@
   "hosts": "Hosts 映射",
   "toAddress": "映射地址",
 
-  "appUpdateCheckVersion": "检测更新",
+  "appUpdateCheckVersion": "检查更新",
   "appUpdateNotAvailableMsg": "已是最新版本",
   "appUpdateDialogTitle": "有可用更新",
   "appUpdateUpdateMsg": "ProxyPin 的新版本现已推出。您想现在更新吗？",

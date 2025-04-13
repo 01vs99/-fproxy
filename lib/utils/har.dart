@@ -21,6 +21,7 @@ import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 class Har {
   static int maxBodyLength = 1024 * 1024 * 4;
@@ -81,7 +82,7 @@ class Har {
     title = title.contains("ProxyPin") ? title : "[ProxyPin]$title";
     har["log"] = {
       "version": "1.2",
-      "creator": {"name": "ProxyPin", "version": "1.1.7"},
+      "creator": {"name": "ProxyPin", "version": AppConfiguration.version},
       "pages": [
         {
           "title": title,

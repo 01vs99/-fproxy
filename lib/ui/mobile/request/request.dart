@@ -36,7 +36,6 @@ import 'package:proxypin/ui/mobile/request/repeat.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
-import 'package:proxypin/ui/mobile/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';

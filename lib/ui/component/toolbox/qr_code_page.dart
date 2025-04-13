@@ -27,6 +27,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_qr_reader_plus/flutter_qr_reader.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
+import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/qrcode/qr_scan_view.dart';
 import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -354,7 +355,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "qrcode.png"});
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      path = (await FilePicker.platform.saveFile(fileName: "qrcode.png"));
+      path = (await FilePicker.platform.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads"));
     }
 
     if (path == null) return;
@@ -364,7 +365,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
 
     await File(path).writeAsBytes(imageBytes);
     if (mounted) {
-      FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
+      CustomToast.success(localizations.saveSuccess).show(context);
     }
   }
 

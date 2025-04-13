@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_qr_reader_copy/flutter_qr_reader_copy.dart';
+import 'package:flutter_qr_reader_plus/flutter_qr_reader.dart';
 import 'package:image_pickers/image_pickers.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -86,9 +86,8 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
 
   handle(String data) async {
     if (!isScan) return;
-    isScan = false;
-    if (mounted) await Navigator.of(context, rootNavigator: true).maybePop(data);
     stop();
+    if (mounted) await Navigator.of(context, rootNavigator: true).maybePop(data);
   }
 
   void _initAnimation() {
@@ -116,9 +115,12 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
   }
 
   void stop() {
+    if (!isScan) {
+      return;
+    }
+
     isScan = false;
-    // _controller?.stopCamera();
-    _controller?.onStop();
+    _controller?.stopCamera();
     _controller = null;
     if (_animationController != null) {
       _animationController?.stop();
@@ -143,7 +145,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     FlutterQrReader.imgScan(path).then((value) {
       stop();
       if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(value.isEmpty ? "-1" : value);
+        Navigator.of(context, rootNavigator: true).pop(value ?? "-1");
       }
     });
   }

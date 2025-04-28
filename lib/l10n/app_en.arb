@@ -18,6 +18,7 @@
   "proxySetting": "Proxy Setting",
   "systemProxy": "Set as System Proxy",
   "serverNotStart": "Proxy server not started",
+  "download": "Download",
 
   "start": "Start",
   "stop": "Stop",

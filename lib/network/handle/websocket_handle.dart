@@ -21,8 +21,8 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
     WebSocketFrame? frame;
     try {
       frame = decoder.decode(msg);
-    } catch (e) {
-      log.e("websocket decode error", error: e);
+    } catch (e, stackTrace) {
+      log.e("websocket decode error", error: e, stackTrace: stackTrace);
     }
     if (frame == null) {
       return;
@@ -31,6 +31,7 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
 
     message.messages.add(frame);
     channelContext.listener?.onMessage(channel, message, frame);
-    logger.d("socket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
+    logger.d(
+        "[${channelContext.clientChannel?.id}] socket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
   }
 }

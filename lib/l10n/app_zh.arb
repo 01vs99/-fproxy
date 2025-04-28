@@ -18,6 +18,7 @@
   "proxySetting": "代理设置",
   "systemProxy": "设置为系统代理",
   "serverNotStart": "未开启抓包",
+  "download": "下载",
 
   "start": "开始",
   "stop": "停止",

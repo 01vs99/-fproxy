@@ -50,23 +50,26 @@ Icon getIcon(HttpResponse? response) {
 
 //展示报文大小
 String getPackagesSize(HttpRequest request, HttpResponse? response) {
-  var package = getPackage(request);
-  var responsePackage = getPackage(response);
+  var package = getPackage(request.packageSize);
+  var responsePackage = getPackage(response?.packageSize);
   if (responsePackage.isEmpty) {
     return package;
   }
   return "$package / $responsePackage ";
 }
 
-String getPackage(HttpMessage? message) {
-  var size = message?.packageSize;
+String getPackage(int? size) {
   if (size == null) {
     return "";
   }
-  if (size > 1024 * 1024) {
-    return "${(size / 1024 / 1024).toStringAsFixed(2)}M";
+  if (size < 1025) {
+    return "$size B";
   }
-  return "${(size / 1024).toStringAsFixed(2)}K";
+
+  if (size > 1024 * 1024) {
+    return "${(size / 1024 / 1024).toStringAsFixed(2)} MB";
+  }
+  return "${(size / 1024).toStringAsFixed(2)} KB";
 }
 
 String copyRequest(HttpRequest request, HttpResponse? response) {
@@ -100,7 +103,7 @@ RelativeRect menuPosition(BuildContext context) {
   return position;
 }
 
-Widget contextMenu(BuildContext context, EditableTextState editableTextState) {
+Widget contextMenu(BuildContext context, EditableTextState editableTextState, {ContextMenuButtonItem? customItem}) {
   List<ContextMenuButtonItem> list = [
     ContextMenuButtonItem(
       onPressed: () {
@@ -128,8 +131,13 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState) {
         editableTextState.selectAll(SelectionChangedCause.tap);
       },
       type: ContextMenuButtonType.selectAll,
-    )
+    ),
   ];
+
+  if (customItem != null) {
+    list.add(customItem);
+  }
+
   if (Platform.isIOS) {
     list.add(ContextMenuButtonItem(
       onPressed: () async {

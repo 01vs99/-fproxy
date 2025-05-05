@@ -88,6 +88,9 @@ class AppConfiguration {
   /// 内存清理
   int? memoryCleanupThreshold;
 
+  ///自动已读
+  bool autoReadEnabled = true;
+
   //桌面window大小
   Size? windowSize;
 
@@ -200,6 +203,7 @@ class AppConfiguration {
       headerExpanded = config['headerExpanded'] ?? true;
       bottomNavigation = config['bottomNavigation'] ?? true;
       memoryCleanupThreshold = config['memoryCleanupThreshold'];
+      autoReadEnabled = config['autoReadEnabled'] ?? true;
 
       windowSize =
           config['windowSize'] == null ? null : Size(config['windowSize']['width'], config['windowSize']['height']);
@@ -241,6 +245,7 @@ class AppConfiguration {
       'upgradeNoticeV18': upgradeNoticeV18,
       "language": _language?.languageCode,
       "headerExpanded": headerExpanded,
+      "autoReadEnabled": autoReadEnabled,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,

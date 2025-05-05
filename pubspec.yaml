@@ -26,16 +26,16 @@ dependencies:
   path_provider: ^2.1.5
   file_picker: ^10.1.2
   proxy_manager: ^0.0.3
-  permission_handler: ^11.3.1
+  permission_handler: ^12.0.0+1
   flutter_toastr: ^1.0.3
   share_plus: ^10.1.4
-  flutter_js: ^0.8.2
+  flutter_js: ^0.8.3
   flutter_code_editor:
     git:
       url: https://github.com/wanghongenpin/flutter-code-editor.git
       ref: secure-keyboard
   flutter_desktop_context_menu: ^0.2.0
-  device_info_plus: ^11.2.1
+  device_info_plus: ^11.4.0
   shared_preferences: ^2.5.3
   image_pickers: ^2.0.6
   url_launcher: ^6.3.1

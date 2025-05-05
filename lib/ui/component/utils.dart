@@ -36,16 +36,16 @@ const contentMap = {
   ContentType.font: Icons.font_download,
 };
 
-Icon getIcon(HttpResponse? response) {
+Icon getIcon(HttpResponse? response, {Color? color}) {
   if (response == null) {
-    return const Icon(Icons.question_mark, size: 16, color: Colors.green);
+    return Icon(Icons.question_mark, size: 16, color: color ?? Colors.green);
   }
   if (response.status.code < 0) {
-    return const Icon(Icons.error, size: 16, color: Colors.red);
+    return Icon(Icons.error, size: 16, color: color ?? Colors.red);
   }
 
   var contentType = response.contentType;
-  return Icon(contentMap[contentType] ?? Icons.http, size: 16, color: Colors.green);
+  return Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green);
 }
 
 //展示报文大小

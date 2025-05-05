@@ -24,8 +24,8 @@ import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/h2/codec.dart';
 import 'package:proxypin/network/http/http_parser.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
+import 'package:proxypin/network/util/compress.dart';
 
-import '../../utils/compress.dart';
 import 'http.dart';
 import 'http_headers.dart';
 

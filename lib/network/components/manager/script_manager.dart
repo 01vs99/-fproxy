@@ -247,7 +247,7 @@ async function onResponse(context, request, response) {
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(scriptContext(item));
-        var jsRequest = jsonEncode(convertJsRequest(request));
+        var jsRequest = jsonEncode(await convertJsRequest(request));
         String script = await getScript(item);
         var jsResult = await flutterJs.evaluateAsync(
             """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
@@ -275,7 +275,7 @@ async function onResponse(context, request, response) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(request.attributes['scriptContext'] ?? scriptContext(item));
         var jsRequest = jsonEncode(convertJsRequest(request));
-        var jsResponse = jsonEncode(convertJsResponse(response));
+        var jsResponse = jsonEncode(await convertJsResponse(response));
         String script = await getScript(item);
         var jsResult = await flutterJs.evaluateAsync(
             """var response = $jsResponse, context = $context;  response['scriptContext'] = context; $script
@@ -321,7 +321,7 @@ async function onResponse(context, request, response) {
   }
 
   //转换js request
-  Map<String, dynamic> convertJsRequest(HttpRequest request) {
+  Future<Map<String, dynamic>> convertJsRequest(HttpRequest request) async {
     var requestUri = request.requestUri;
     return {
       'host': requestUri?.host,
@@ -330,17 +330,18 @@ async function onResponse(context, request, response) {
       'queries': requestUri?.queryParameters,
       'headers': request.headers.toMap(),
       'method': request.method.name,
-      'body': request.getBodyString(),
+      'body': request.decodeBodyString(),
       'rawBody': request.body
     };
   }
 
   //转换js response
-  Map<String, dynamic> convertJsResponse(HttpResponse response) {
-    dynamic body = response.getBodyString();
+  Future<Map<String, dynamic>> convertJsResponse(HttpResponse response) async {
+    dynamic body = await response.decodeBodyString();
     if (response.contentType.isBinary) {
       body = response.body;
     }
+
     return {
       'headers': response.headers.toMap(),
       'statusCode': response.status.code,

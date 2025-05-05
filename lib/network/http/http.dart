@@ -20,9 +20,9 @@ import 'dart:math';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/util/compress.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
-import 'package:proxypin/utils/compress.dart';
 
 import 'http_headers.dart';
 
@@ -52,7 +52,9 @@ abstract class HttpMessage {
   //报文大小
   int? packageSize;
 
-  List<int>? body;
+  List<int>? _body;
+  String? _bodyString;
+
   String? remoteHost;
   int? remotePort;
 
@@ -79,6 +81,14 @@ abstract class HttpMessage {
           orElse: () => const MapEntry("unknown", ContentType.http))
       .value;
 
+  List<int>? get body => _body;
+
+  set body(List<int>? body) {
+    _body = body;
+    _bodyString = null;
+    packageSize = body?.length ?? 0;
+  }
+
   ///获取消息体编码
   String? get charset {
     var contentType = headers.contentType;
@@ -100,6 +110,10 @@ abstract class HttpMessage {
       return "";
     }
 
+    if (_bodyString != null) {
+      return _bodyString!;
+    }
+
     charset ??= this.charset;
     try {
       List<int> rawBody = body!;
@@ -114,6 +128,29 @@ abstract class HttpMessage {
     } catch (e) {
       return String.fromCharCodes(body!);
     }
+  }
+
+  Future<String> decodeBodyString() async {
+    if (body == null || body?.isEmpty == true) {
+      return "";
+    }
+
+    if (_bodyString != null) {
+      return _bodyString!;
+    }
+
+    List<int> rawBody = body!;
+    if (headers.contentEncoding == 'zstd') {
+      rawBody = await zstdDecode(body!) ?? [];
+      if (charset == 'utf-8' || charset == 'utf8') {
+        _bodyString = utf8.decode(rawBody);
+      } else {
+        _bodyString = String.fromCharCodes(rawBody);
+      }
+      return _bodyString!;
+    }
+
+    return getBodyString();
   }
 
   String get cookie => headers.cookie;

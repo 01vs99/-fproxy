@@ -176,9 +176,9 @@ class RequestRewriteInterceptor extends Interceptor {
   }
 
   //修改消息
-  _updateMessage(HttpMessage message, RewriteItem item) {
+  _updateMessage(HttpMessage message, RewriteItem item) async {
     if (item.type == RewriteType.updateBody && message.body != null) {
-      String body = message.getBodyString().replaceAllMapped(RegExp(item.key!), (match) {
+      String body = (await message.decodeBodyString()).replaceAllMapped(RegExp(item.key!), (match) {
         if (match.groupCount > 0 && item.value?.contains("\$1") == true) {
           return item.value!.replaceAll("\$1", match.group(1)!);
         }

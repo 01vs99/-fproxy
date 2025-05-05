@@ -161,10 +161,15 @@ void unSelect(EditableTextState editableTextState) {
 }
 
 ///Future
-Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {bool loading = false}) {
+Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {T? initialData, bool loading = false}) {
   return FutureBuilder<T>(
     future: future,
+    initialData: initialData,
     builder: (BuildContext context, AsyncSnapshot<T> snapshot) {
+      if (snapshot.data != null) {
+        return toWidget(snapshot.requireData);
+      }
+
       if (snapshot.connectionState == ConnectionState.done) {
         if (snapshot.hasError) {
           logger.e(snapshot.error);

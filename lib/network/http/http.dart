@@ -120,6 +120,11 @@ abstract class HttpMessage {
       if (headers.contentEncoding == 'br') {
         rawBody = brDecode(body!);
       }
+
+      if (headers.isGzip) {
+        rawBody = gzipDecode(body!);
+      }
+
       if (charset == 'utf-8' || charset == 'utf8') {
         return utf8.decode(rawBody);
       }
@@ -153,7 +158,7 @@ abstract class HttpMessage {
     return getBodyString();
   }
 
-  String get cookie => headers.cookie;
+  List<String> get cookies => headers.cookies;
 
   List<WebSocketFrame> messages = [];
 }

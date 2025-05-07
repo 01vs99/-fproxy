@@ -327,7 +327,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   }
 
   Widget cookies() {
-    var requestCookie = _cookieWidget(widget.request.get()?.cookie);
+    var requestCookie = widget.request.get()?.cookies.expand((cookie) => _cookieWidget(cookie)!);
 
     var responseCookie = widget.response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(e)!);
     return ListView(children: [

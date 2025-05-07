@@ -216,9 +216,8 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       padLength = payload.readByte();
     }
 
-    payload.skipBytes(padLength);
     //读取数据
-    int dataLength = payload.readableBytes();
+    int dataLength = payload.readableBytes() - padLength;
     var data = payload.readBytes(dataLength);
     var message = getMessage(channelContext, frameHeader)!;
     if (message.body == null) {
@@ -250,8 +249,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       weight = payload.readByte(); // weight
     }
 
-    payload.skipBytes(padLength);
-    var headerBlockLength = payload.length - payload.readerIndex;
+    var headerBlockLength = payload.length - payload.readerIndex - padLength;
     if (headerBlockLength < 0) {
       throw Exception("headerBlockLength < 0");
     }

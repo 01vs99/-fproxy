@@ -24,7 +24,6 @@ import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/h2/h2_codec.dart';
 import 'package:proxypin/network/http/http_parser.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
-import 'package:proxypin/network/util/compress.dart';
 
 import 'http.dart';
 import 'http_headers.dart';
@@ -165,9 +164,6 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
     initialLine(builder, message);
 
     List<int>? body = message.body;
-    if (message.headers.isGzip && body != null) {
-      body = gzipEncode(body);
-    }
 
     //请求头
     bool isChunked = message.headers.isChunked;
@@ -216,9 +212,6 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
   List<int>? _convertBody(List<int>? bytes) {
     if (bytes == null) {
       return null;
-    }
-    if (result.data!.headers.isGzip) {
-      bytes = gzipDecode(bytes);
     }
     return bytes;
   }

@@ -17,6 +17,7 @@
   "password": "密码",
   "proxySetting": "代理设置",
   "systemProxy": "设置为系统代理",
+  "enabledHTTP2": "启用HTTP2",
   "serverNotStart": "未开启抓包",
   "download": "下载",
 

@@ -19,22 +19,25 @@ import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/codec.dart';
-import 'package:proxypin/network/http/h2/hpack.dart';
 import 'package:proxypin/network/http/h2/setting.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 import 'frame.dart';
+import 'hpack/hpack.dart';
 
 /// http编解码
 abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   static const maxFrameSize = 16384;
 
   static final List<int> connectionPrefacePRI = "PRI * HTTP/2.0".codeUnits;
-  HPACKDecoder decoder = HPACKDecoder();
-  HPACKEncoder encoder = HPACKEncoder();
 
-  T createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, String> headers);
+  HPackDecoder decoder = HPackDecoder();
+
+  HPackEncoder encoder = HPackEncoder();
+
+  T createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, List<String>> headers);
 
   T? getMessage(ChannelContext channelContext, FrameHeader frameHeader);
 
@@ -53,6 +56,8 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     while (byteBuf.isReadable()) {
       DecoderResult<T> result = DecoderResult<T>(isDone: false);
       FrameHeader? frameHeader = FrameReader._readFrameHeader(byteBuf);
+      // logger.d("${frameHeader?.streamIdentifier} frame ${frameHeader?.length} ${byteBuf.readableBytes()}");
+
       if (frameHeader == null) {
         return result;
       }
@@ -63,7 +68,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         return result;
       }
 
-      result = parseHttp2Packet(channelContext, frameHeader, ByteBuf(framePayload));
+      result = parseHttp2Packet(channelContext, frameHeader, framePayload);
       if (result.isDone) {
         return result;
       }
@@ -72,27 +77,29 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     return DecoderResult<T>(isDone: false);
   }
 
-  DecoderResult<T> parseHttp2Packet(ChannelContext channelContext, FrameHeader frameHeader, ByteBuf framePayload) {
+  DecoderResult<T> parseHttp2Packet(ChannelContext channelContext, FrameHeader frameHeader, List<int> framePayload) {
     var result = DecoderResult<T>();
-    // logger.d("streamId: ${frameHeader.streamIdentifier} ${frameHeader.type} endHeaders: ${frameHeader.hasEndHeadersFlag} "
-    //     "endStream: ${frameHeader.hasEndStreamFlag}");
+    // logger.d(
+    //     "${this is Http2RequestDecoder ? 'request' : 'response'} streamId: ${frameHeader.streamIdentifier} ${frameHeader.type} endHeaders: ${frameHeader.hasEndHeadersFlag} "
+    //     "endStream: ${frameHeader.hasEndStreamFlag} ${frameHeader.length}");
     //根据帧类型进行处理
     switch (frameHeader.type) {
       case FrameType.headers:
         //处理HEADERS帧
-        _handleHeadersFrame(channelContext, frameHeader, framePayload);
+        _handleHeadersFrame(channelContext, frameHeader, ByteBuf(framePayload));
         result.isDone = frameHeader.hasEndStreamFlag && frameHeader.hasEndHeadersFlag;
         break;
       case FrameType.continuation:
         //处理CONTINUATION帧
         var message = getMessage(channelContext, frameHeader);
         if (message == null) {
-          result.forward = List.from(frameHeader.encode())..addAll(framePayload.readAvailableBytes());
+          logger.e("CONTINUATION frame but no message found");
+          result.forward = List.from(frameHeader.encode())..addAll(framePayload);
           return result;
         }
 
-        Map<String, String> headers = _parseHeaders(channelContext, framePayload.readBytes(frameHeader.length));
-        headers.forEach((key, value) => message.headers.add(key, value));
+        Map<String, List<String>> headers = _parseHeaders(channelContext, framePayload);
+        headers.forEach((key, values) => message.headers.addValues(key, values));
 
         if (frameHeader.hasEndHeadersFlag &&
             channelContext.getStreamRequest(frameHeader.streamIdentifier)?.method == HttpMethod.head) {
@@ -101,16 +108,16 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         break;
       case FrameType.data:
         //处理DATA帧
-        _handleDataFrame(channelContext, frameHeader, framePayload);
+        _handleDataFrame(channelContext, frameHeader, ByteBuf(framePayload));
         result.isDone = frameHeader.hasEndStreamFlag;
         break;
       case FrameType.settings:
-        SettingHandler.handleSettingsFrame(channelContext, frameHeader, framePayload);
-        result.forward = List.from(frameHeader.encode())..addAll(framePayload.bytes);
+        SettingHandler.handleSettingsFrame(channelContext, frameHeader, ByteBuf(framePayload));
+        result.forward = List.from(frameHeader.encode())..addAll(framePayload);
         return result;
       default:
         //其他帧类型 原文转发
-        result.forward = List.from(frameHeader.encode())..addAll(framePayload.bytes);
+        result.forward = List.from(frameHeader.encode())..addAll(framePayload);
         return result;
     }
 
@@ -132,34 +139,38 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   @override
   Uint8List encode(T data) {
     var bytesBuilder = BytesBuilder();
+    // data.headers.contentLength = data.body?.length ?? 0;
+    var emptyBody = data.body == null || data.body!.isEmpty;
 
     //headers
     var headers = encodeHeaders(data);
-    BytesBuilder headerBlock = BytesBuilder();
+    // BytesBuilder headerBlock = BytesBuilder();
     bool firstFrame = true;
-    for (var header in headers) {
-      var encode = encoder.encode(header);
-      //防止出现桢分片导致header分裂
-      if (headerBlock.length + encode.length < maxFrameSize) {
-        headerBlock.add(encode);
-        continue;
-      }
-      FrameType frameType = firstFrame ? FrameType.headers : FrameType.continuation;
-      int flags = frameType == FrameType.headers && data.body == null ? FrameHeader.flagsEndStream : 0;
-      firstFrame = false;
+    var headerBlock = encoder.encode(headers);
 
-      _writeFrame(bytesBuilder, frameType, flags, data.streamId!, headerBlock.takeBytes());
-      headerBlock.add(encode);
-    }
+    // for (var header in headers) {
+    //   //防止出现桢分片导致header分裂
+    //   if (headerBlock.length + encode.length < maxFrameSize) {
+    //     headerBlock.add(encode);
+    //     continue;
+    //   }
+    //
+    //   FrameType frameType = firstFrame ? FrameType.headers : FrameType.continuation;
+    //   int flags = frameType == FrameType.headers && emptyBody ? FrameHeader.flagsEndStream : 0;
+    //   firstFrame = false;
+    //
+    //   _writeFrame(bytesBuilder, frameType, flags, data.streamId!, headerBlock.takeBytes());
+    //   headerBlock.add(encode);
+    // }
 
     FrameType frameType = firstFrame ? FrameType.headers : FrameType.continuation;
-    int flags = frameType == FrameType.headers && data.body == null ? FrameHeader.flagsEndStream : 0;
+    int flags = frameType == FrameType.headers && emptyBody ? FrameHeader.flagsEndStream : 0;
     flags |= FrameHeader.flagsEndHeaders;
 
-    _writeFrame(bytesBuilder, frameType, flags, data.streamId!, headerBlock.takeBytes());
+    _writeFrame(bytesBuilder, frameType, flags, data.streamId!, headerBlock);
 
     //body
-    if (data.body != null) {
+    if (data.body?.isNotEmpty == true) {
       var payload = data.body!;
       while (payload.length > maxFrameSize) {
         var chunkSize = min(maxFrameSize, payload.length);
@@ -169,6 +180,9 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       }
 
       _writeFrame(bytesBuilder, FrameType.data, FrameHeader.flagsEndStream, data.streamId!, payload);
+    } else if (frameType != FrameType.headers && emptyBody) {
+      //如果没有body，发送一个空的DATA帧
+      _writeFrame(bytesBuilder, FrameType.data, FrameHeader.flagsEndStream, data.streamId!, []);
     }
 
     return bytesBuilder.takeBytes();
@@ -176,8 +190,8 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
   void _writeFrame(BytesBuilder bytesBuilder, FrameType type, int flag, int streamId, List<int> payload) {
     FrameHeader frameHeader = FrameHeader(payload.length, type, flag, streamId);
-    // logger.d("_writeFrame streamId: ${frameHeader.streamIdentifier}  ${frameHeader.type} endHeaders: ${frameHeader
-    //         .hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag}");
+    // logger.d(
+    //     "${this is Http2RequestDecoder ? 'request' : 'response'} _writeFrame streamId: ${frameHeader.streamIdentifier}  ${frameHeader.type} flags:${frameHeader.flags} endHeaders: ${frameHeader.hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag} ${payload.length}");
     bytesBuilder.add(frameHeader.encode());
     bytesBuilder.add(payload);
   }
@@ -201,8 +215,10 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     if (frameHeader.hasPaddedFlag) {
       padLength = payload.readByte();
     }
-    frameHeader.length;
-    int dataLength = payload.readableBytes() - padLength;
+
+    payload.skipBytes(padLength);
+    //读取数据
+    int dataLength = payload.readableBytes();
     var data = payload.readBytes(dataLength);
     var message = getMessage(channelContext, frameHeader)!;
     if (message.body == null) {
@@ -234,7 +250,8 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       weight = payload.readByte(); // weight
     }
 
-    var headerBlockLength = payload.length - payload.readerIndex - padLength;
+    payload.skipBytes(padLength);
+    var headerBlockLength = payload.length - payload.readerIndex;
     if (headerBlockLength < 0) {
       throw Exception("headerBlockLength < 0");
     }
@@ -242,31 +259,34 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     var blockFragment = payload.readBytes(headerBlockLength);
 
     //读取头部信息
-    Map<String, String> headers = _parseHeaders(channelContext, blockFragment);
+    Map<String, List<String>> headers = _parseHeaders(channelContext, blockFragment);
 
     T message = createMessage(channelContext, frameHeader, headers);
 
-    headers.forEach((key, value) {
+    headers.forEach((key, values) {
       if (!key.startsWith(":")) {
-        message.headers.add(key, value);
+        message.headers.addValues(key, values);
       }
     });
 
     return HeadersFrame(frameHeader, padLength, exclusiveDependency, streamDependency, weight, blockFragment);
   }
 
-  Map<String, String> _parseHeaders(ChannelContext channelContext, List<int> payload) {
+  Map<String, List<String>> _parseHeaders(ChannelContext channelContext, List<int> payload) {
     if (channelContext.setting != null) {
-      decoder.updateTableSize(channelContext.setting!.headTableSize);
+      decoder.updateMaxReceivingHeaderTableSize(channelContext.setting!.headTableSize);
     }
 
     // Decode the headers
     List<Header> headers = decoder.decode(payload);
 
     // Convert the headers to a map
-    Map<String, String> headerMap = {};
+    Map<String, List<String>> headerMap = {};
     for (Header header in headers) {
-      headerMap[header.name] = header.value;
+      final name = header.nameString;
+      final value = header.valueString;
+      headerMap[name] ??= [];
+      headerMap[name]!.add(value);
     }
 
     return headerMap;
@@ -275,9 +295,10 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
 class Http2RequestDecoder extends Http2Codec<HttpRequest> {
   @override
-  HttpRequest createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, String> headers) {
-    HttpMethod httpMethod = HttpMethod.valueOf(headers[":method"]!);
-    var httpRequest = HttpRequest(httpMethod, headers[":path"]!, protocolVersion: headers[":version"] ?? "HTTP/2");
+  HttpRequest createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, List<String>> headers) {
+    HttpMethod httpMethod = HttpMethod.valueOf(headers[":method"]!.first);
+    var httpRequest =
+        HttpRequest(httpMethod, headers[":path"]!.first, protocolVersion: headers[":version"]?.firstOrNull ?? "HTTP/2");
     var old = channelContext.putStreamRequest(frameHeader.streamIdentifier, httpRequest);
     assert(old == null, "old request is not null");
     return httpRequest;
@@ -292,14 +313,14 @@ class Http2RequestDecoder extends Http2Codec<HttpRequest> {
   List<Header> encodeHeaders(HttpRequest message) {
     var headers = <Header>[];
     var uri = message.requestUri!;
-    headers.add(Header(":method", message.method.name));
-    headers.add(Header(":scheme", uri.scheme));
-    headers.add(Header(":authority", uri.host));
-    headers.add(Header(":path", message.uri));
+    headers.add(Header.ascii(":method", message.method.name));
+    headers.add(Header.ascii(":scheme", uri.scheme));
+    headers.add(Header.ascii(":authority", uri.host));
+    headers.add(Header.ascii(":path", message.uri));
 
     message.headers.forEach((key, values) {
       for (var value in values) {
-        headers.add(Header(key, value));
+        headers.add(Header.ascii(key, value));
       }
     });
     return headers;
@@ -308,9 +329,10 @@ class Http2RequestDecoder extends Http2Codec<HttpRequest> {
 
 class Http2ResponseDecoder extends Http2Codec<HttpResponse> {
   @override
-  HttpResponse createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, String> headers) {
-    var httpResponse = HttpResponse(HttpStatus.valueOf(int.parse(headers[':status']!)),
-        protocolVersion: headers[":version"] ?? 'HTTP/2');
+  HttpResponse createMessage(
+      ChannelContext channelContext, FrameHeader frameHeader, Map<String, List<String>> headers) {
+    var httpResponse = HttpResponse(HttpStatus.valueOf(int.parse(headers[':status']!.first)),
+        protocolVersion: headers[":version"]?.firstOrNull ?? 'HTTP/2');
     httpResponse.requestId = channelContext.getStreamRequest(frameHeader.streamIdentifier)!.requestId;
     channelContext.putStreamResponse(frameHeader.streamIdentifier, httpResponse);
     return httpResponse;
@@ -324,10 +346,10 @@ class Http2ResponseDecoder extends Http2Codec<HttpResponse> {
   @override
   List<Header> encodeHeaders(HttpResponse message) {
     var headers = <Header>[];
-    headers.add(Header(":status", message.status.code.toString()));
+    headers.add(Header.ascii(":status", message.status.code.toString()));
     message.headers.forEach((key, values) {
       for (var value in values) {
-        headers.add(Header(key, value));
+        headers.add(Header.ascii(key, value));
       }
     });
     return headers;
@@ -342,7 +364,9 @@ class FrameReader {
       return null;
     }
 
-    return data.readBytes(length);
+    var readBytes = data.readBytes(length);
+    data.clearRead();
+    return readBytes;
   }
 
   static FrameHeader? _readFrameHeader(ByteBuf data) {

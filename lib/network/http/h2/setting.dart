@@ -63,7 +63,7 @@ class SettingHandler {
       // Handle the setting based on its identifier
       switch (identifier) {
         case 1: // SETTINGS_HEADER_TABLE_SIZE
-          setting.maxFrameSize = value;
+          setting.headTableSize = value;
           break;
         case 2: // SETTINGS_ENABLE_PUSH
           setting.enablePush = value == 1;

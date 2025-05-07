@@ -21,7 +21,7 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/body_reader.dart';
 import 'package:proxypin/network/http/constants.dart';
-import 'package:proxypin/network/http/h2/codec.dart';
+import 'package:proxypin/network/http/h2/h2_codec.dart';
 import 'package:proxypin/network/http/http_parser.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:proxypin/network/util/compress.dart';
@@ -94,7 +94,8 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf data) {
-    if (channelContext.serverChannel?.selectedProtocol == HttpConstants.h2) {
+    var protocol = channelContext.serverChannel?.selectedProtocol;
+    if (protocol == HttpConstants.h2 || protocol == HttpConstants.h2_14) {
       return getH2Codec().decode(channelContext, data);
     }
 

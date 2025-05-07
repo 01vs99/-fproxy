@@ -180,7 +180,7 @@ class Server extends Network {
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate, bufferedData: data);
       channel.serverSecureSocket(secureSocket, channelContext);
     } catch (error, trace) {
-      logger.e('$hostAndPort ssl error', error: error);
+      logger.e('[${channel.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
       try {
         channelContext.processInfo ??=
             await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');

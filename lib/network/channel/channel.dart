@@ -115,6 +115,10 @@ class Channel {
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
+    if (isWriting) {
+      logger.w("[$id] write busy");
+    }
+
     isWriting = true;
     try {
       if (!isClosed) {

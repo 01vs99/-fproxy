@@ -17,6 +17,7 @@
   "password": "Password",
   "proxySetting": "Proxy Setting",
   "systemProxy": "Set as System Proxy",
+  "enabledHTTP2": "Enable HTTP2",
   "serverNotStart": "Proxy server not started",
   "download": "Download",
 

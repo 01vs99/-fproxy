@@ -113,10 +113,13 @@ class ProxyHelper {
       request.uri = hostAndPort.domain;
     }
 
-    request.response = HttpResponse(status)
-      ..headers.contentType = 'text/plain'
-      ..headers.contentLength = message.codeUnits.length
-      ..body = message.codeUnits;
+    if (request.response == null || request.method == HttpMethod.connect) {
+      request.response = HttpResponse(status)
+        ..headers.contentType = 'text/plain'
+        ..headers.contentLength = message.codeUnits.length
+        ..body = message.codeUnits;
+    }
+
     request.response?.request = request;
 
     channelContext.host = hostAndPort;

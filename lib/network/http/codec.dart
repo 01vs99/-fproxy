@@ -19,10 +19,10 @@ import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
-import 'package:proxypin/network/http/body_reader.dart';
+import 'package:proxypin/network/http/parse/body_reader.dart';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/h2/h2_codec.dart';
-import 'package:proxypin/network/http/http_parser.dart';
+import 'package:proxypin/network/http/parse/http_parser.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 
 import 'http.dart';
@@ -155,7 +155,7 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
   @override
   List<int> encode(T message) {
-    if (message.streamId != null) {
+    if (message.protocolVersion == "HTTP/2") {
       return getH2Codec().encode(message);
     }
 

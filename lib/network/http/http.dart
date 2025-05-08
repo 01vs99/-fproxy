@@ -234,6 +234,8 @@ class HttpRequest extends HttpMessage {
     if (uri != null && !uri.startsWith('/')) {
       request.hostAndPort = HostAndPort.of(uri);
     }
+    request.hostAndPort ??= hostAndPort;
+    request.streamId = streamId;
     request.body = body;
     return request;
   }

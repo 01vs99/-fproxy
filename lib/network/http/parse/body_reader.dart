@@ -20,8 +20,8 @@ import 'dart:typed_data';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/http.dart';
 
-import '../../utils/num.dart';
-import 'codec.dart';
+import '../../../utils/num.dart';
+import '../codec.dart';
 
 class Result {
   final bool isDone;

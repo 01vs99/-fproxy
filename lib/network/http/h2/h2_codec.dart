@@ -24,6 +24,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:proxypin/network/util/logger.dart';
 
+import '../../util/byte_utils.dart';
 import 'frame.dart';
 import 'hpack/hpack.dart';
 
@@ -55,7 +56,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
     while (byteBuf.isReadable()) {
       DecoderResult<T> result = DecoderResult<T>(isDone: false);
-      FrameHeader? frameHeader = FrameReader._readFrameHeader(byteBuf);
+      FrameHeader? frameHeader = FrameReader.readFrameHeader(byteBuf);
       // logger.d("${frameHeader?.streamIdentifier} frame ${frameHeader?.length} ${byteBuf.readableBytes()}");
 
       if (frameHeader == null) {
@@ -115,6 +116,15 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         SettingHandler.handleSettingsFrame(channelContext, frameHeader, ByteBuf(framePayload));
         result.forward = List.from(frameHeader.encode())..addAll(framePayload);
         return result;
+      case FrameType.goaway:
+        var lastStreamId = readInt32(framePayload, 0);
+        var errorCode = readInt32(framePayload, 4);
+        var debugData = viewOrSublist(framePayload, 8, frameHeader.length - 8);
+        logger.i(
+            "h2 goaway streamId: ${frameHeader.streamIdentifier} lastStreamId: $lastStreamId errorCode: $errorCode debugData: ${String.fromCharCodes(debugData)}");
+        result.forward = List.from(frameHeader.encode())..addAll(framePayload);
+        return result;
+
       default:
         //其他帧类型 原文转发
         result.forward = List.from(frameHeader.encode())..addAll(framePayload);
@@ -318,7 +328,7 @@ class Http2RequestDecoder extends Http2Codec<HttpRequest> {
 
     message.headers.forEach((key, values) {
       for (var value in values) {
-        headers.add(Header.ascii(key, value));
+        headers.add(Header.ascii(key.toLowerCase(), value));
       }
     });
     return headers;
@@ -331,7 +341,10 @@ class Http2ResponseDecoder extends Http2Codec<HttpResponse> {
       ChannelContext channelContext, FrameHeader frameHeader, Map<String, List<String>> headers) {
     var httpResponse = HttpResponse(HttpStatus.valueOf(int.parse(headers[':status']!.first)),
         protocolVersion: headers[":version"]?.firstOrNull ?? 'HTTP/2');
-    httpResponse.requestId = channelContext.getStreamRequest(frameHeader.streamIdentifier)!.requestId;
+    final requestId = channelContext.getStreamRequest(frameHeader.streamIdentifier)?.requestId;
+    if (requestId != null) {
+      httpResponse.requestId = requestId;
+    }
     channelContext.putStreamResponse(frameHeader.streamIdentifier, httpResponse);
     return httpResponse;
   }
@@ -367,7 +380,7 @@ class FrameReader {
     return readBytes;
   }
 
-  static FrameHeader? _readFrameHeader(ByteBuf data) {
+  static FrameHeader? readFrameHeader(ByteBuf data) {
     if (data.readableBytes() < headerLength) {
       return null;
     }

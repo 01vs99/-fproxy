@@ -101,17 +101,21 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
         return;
       }
 
-      if (!decodeResult.isDone) {
-        return;
-      }
-
       if (decodeResult.forward != null) {
+        buffer.clearRead();
+
         if (remoteChannel != null) {
           await remoteChannel.writeBytes(decodeResult.forward!);
         } else {
           logger.w("[$channel] forward remoteChannel is null");
         }
-        buffer.clearRead();
+
+        if (decodeResult.data == null) {
+          return;
+        }
+      }
+
+      if (!decodeResult.isDone) {
         return;
       }
 

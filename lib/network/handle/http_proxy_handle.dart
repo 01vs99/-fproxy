@@ -87,7 +87,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     //实现抓包代理转发
     if (httpRequest.method != HttpMethod.connect) {
-      log.d("[${channel.id}] ${httpRequest.method.name} ${httpRequest.requestUrl}");
+      log.d("[${channel.id}] ${httpRequest.protocolVersion}  ${httpRequest.method.name} ${httpRequest.requestUrl}");
       if (HostFilter.filter(httpRequest.hostAndPort?.host)) {
         await remoteChannel.write(httpRequest);
         return;
@@ -171,7 +171,8 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       } else {
         if (clientChannel.isSsl) {
           await HttpClients.connectRequest(hostAndPort, proxyChannel, proxyInfo: proxyInfo);
-          await proxyChannel.secureSocket(channelContext, host: hostAndPort.host);
+          await proxyChannel.secureSocket(channelContext,
+              host: hostAndPort.host, supportedProtocols: httpRequest.protocolVersion == "HTTP/2" ? ["h2"] : null);
         }
       }
 
@@ -191,7 +192,11 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     final proxyChannel = await connectRemote(channelContext, clientChannel, remoteAddress);
     if (clientChannel.isSsl) {
-      await proxyChannel.secureSocket(channelContext, host: hostAndPort.host);
+      await proxyChannel.secureSocket(channelContext,
+          host: hostAndPort.host,
+          supportedProtocols: channelContext.clientChannel?.selectedProtocol == null
+              ? null
+              : [channelContext.clientChannel!.selectedProtocol!]);
     }
 
     //https代理新建连接请求
@@ -222,7 +227,7 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
 
   @override
   void channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
-    var request = channelContext.currentRequest;
+    var request = msg.request ?? channelContext.currentRequest;
     request?.response = msg;
 
     //域名是否过滤

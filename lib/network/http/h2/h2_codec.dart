@@ -32,7 +32,7 @@ import 'hpack/hpack.dart';
 abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   static const maxFrameSize = 16384;
 
-  static final List<int> connectionPrefacePRI = "PRI * HTTP/2.0".codeUnits;
+  static final List<int> connectionPrefacePRI = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".codeUnits;
 
   HPackDecoder decoder = HPackDecoder();
 
@@ -44,42 +44,52 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf byteBuf, {bool resolveBody = true}) {
+    DecoderResult<T> result = DecoderResult<T>();
+
     //Connection Preface PRI * HTTP/2.0
     if (byteBuf.get(byteBuf.readerIndex) == 0x50 &&
         byteBuf.get(byteBuf.readerIndex + 1) == 0x52 &&
         byteBuf.get(byteBuf.readerIndex + 2) == 0x49 &&
         isConnectionPrefacePRI(byteBuf)) {
-      DecoderResult<T> result = DecoderResult<T>();
-      result.forward = byteBuf.readAvailableBytes();
-      return result;
+
+      result.forward = byteBuf.readBytes(connectionPrefacePRI.length);
+      // logger.d(
+      //     "Connection Preface ${connectionPrefacePRI.length} ${String.fromCharCodes(result.forward!)} ${byteBuf.readableBytes()}");
+      if (byteBuf.readableBytes() <= 0) {
+        return result;
+      }
     }
 
     while (byteBuf.isReadable()) {
-      DecoderResult<T> result = DecoderResult<T>(isDone: false);
       FrameHeader? frameHeader = FrameReader.readFrameHeader(byteBuf);
-      // logger.d("${frameHeader?.streamIdentifier} frame ${frameHeader?.length} ${byteBuf.readableBytes()}");
-
+      // logger.d(
+      //     "frameHeader streamId: ${frameHeader?.streamIdentifier} frame ${frameHeader?.type.name} ${frameHeader?.length} ${byteBuf.readableBytes()}");
       if (frameHeader == null) {
+        result.isDone = false;
         return result;
       }
 
       List<int>? framePayload = FrameReader._readFramePayload(byteBuf, frameHeader.length);
       if (framePayload == null) {
+        result.isDone = false;
         byteBuf.readerIndex -= FrameReader.headerLength;
         return result;
       }
 
-      result = parseHttp2Packet(channelContext, frameHeader, framePayload);
-      if (result.isDone) {
-        return result;
+      var parseResult = parseHttp2Packet(channelContext, frameHeader, framePayload);
+      if (result.forward != null) {
+        parseResult.forward = List.of(result.forward!)..addAll(parseResult.forward ?? []);
       }
+
+      return parseResult;
     }
 
-    return DecoderResult<T>(isDone: false);
+    result.isDone = false;
+    return result;
   }
 
   DecoderResult<T> parseHttp2Packet(ChannelContext channelContext, FrameHeader frameHeader, List<int> framePayload) {
-    var result = DecoderResult<T>();
+    var result = DecoderResult<T>(isDone: false);
     // logger.d(
     //     "${this is Http2RequestDecoder ? 'request' : 'response'} streamId: ${frameHeader.streamIdentifier} ${frameHeader.type} endHeaders: ${frameHeader.hasEndHeadersFlag} "
     //     "endStream: ${frameHeader.hasEndStreamFlag} ${frameHeader.length}");
@@ -114,6 +124,12 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         break;
       case FrameType.settings:
         SettingHandler.handleSettingsFrame(channelContext, frameHeader, ByteBuf(framePayload));
+        result.forward = List.from(frameHeader.encode())..addAll(framePayload);
+        return result;
+      case FrameType.windowUpdate:
+        //处理WINDOW_UPDATE帧
+        var windowSizeIncrement = readInt32(framePayload, 0) & 0x7fffffff;
+        logger.d("h2 windowUpdate streamId: ${frameHeader.streamIdentifier} windowSizeIncrement: $windowSizeIncrement");
         result.forward = List.from(frameHeader.encode())..addAll(framePayload);
         return result;
       case FrameType.goaway:
@@ -200,8 +216,9 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
   void _writeFrame(BytesBuilder bytesBuilder, FrameType type, int flag, int streamId, List<int> payload) {
     FrameHeader frameHeader = FrameHeader(payload.length, type, flag, streamId);
-    // logger.d(
-    //     "${this is Http2RequestDecoder ? 'request' : 'response'} _writeFrame streamId: ${frameHeader.streamIdentifier}  ${frameHeader.type} flags:${frameHeader.flags} endHeaders: ${frameHeader.hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag} ${payload.length}");
+    logger.d(
+        "${this is Http2RequestDecoder ? 'request' : 'response'} _writeFrame streamId: ${frameHeader.streamIdentifier}  ${frameHeader.type} flags:${frameHeader.flags} endHeaders: ${frameHeader.hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag} ${payload.length}");
+
     bytesBuilder.add(frameHeader.encode());
     bytesBuilder.add(payload);
   }

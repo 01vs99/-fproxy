@@ -246,6 +246,7 @@ class HttpRequest extends HttpMessage {
       '_class': 'HttpRequest',
       'uri': requestUrl,
       'method': method.name,
+      'protocolVersion': protocolVersion,
       'packageSize': packageSize,
       'headers': headers.toJson(),
       'body': body == null ? null : String.fromCharCodes(body!),
@@ -254,7 +255,9 @@ class HttpRequest extends HttpMessage {
   }
 
   factory HttpRequest.fromJson(Map<String, dynamic> json) {
-    var request = HttpRequest(HttpMethod.valueOf(json['method']), json['uri']);
+    var request = HttpRequest(HttpMethod.valueOf(json['method']), json['uri'],
+        protocolVersion: json['protocolVersion'] ?? "HTTP/1.1");
+    
     request.headers.addAll(HttpHeaders.fromJson(json['headers']));
     request.body = json['body']?.toString().codeUnits;
     if (json['requestTime'] != null) {
@@ -320,7 +323,7 @@ class HttpResponse extends HttpMessage {
 
   @override
   String toString() {
-    return 'HttpResponse{status: ${status.code}, headers: $headers, contentLength: $contentLength, bodyLength: ${body?.length}}';
+    return 'HttpResponse{status: ${status.code}, protocolVersion: $protocolVersion headers: $headers, contentLength: $contentLength, bodyLength: ${body?.length}}';
   }
 }
 

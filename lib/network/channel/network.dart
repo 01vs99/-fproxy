@@ -177,13 +177,14 @@ class Server extends Network {
       if (selectedProtocol != null) certificate.setAlpnProtocols([selectedProtocol], true);
 
       //处理客户端ssl握手
-      var secureSocket = await SecureSocket.secureServer(channel.socket, certificate, bufferedData: data);
+      var secureSocket = await SecureSocket.secureServer(channel.socket, certificate, bufferedData: data,
+          supportedProtocols: selectedProtocol != null ? [selectedProtocol] : null);
       channel.serverSecureSocket(secureSocket, channelContext);
     } catch (error, trace) {
       logger.e('[${channel.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
       try {
         channelContext.processInfo ??=
-            await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
+        await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
       } catch (ignore) {
         /*ignore*/
       }

@@ -195,7 +195,7 @@ class Http2ClientHandler {
         onError: (error, trace) => handler.exceptionCaught(channelContext, channel, error, trace: trace),
         onDone: () => handler.channelInactive(channelContext, channel));
 
-    channel.writeBytes("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".codeUnits);
+    channel.writeBytes(Http2Codec.connectionPrefacePRI);
   }
 
   onData(ChannelContext channelContext, Channel channel, Uint8List data) {

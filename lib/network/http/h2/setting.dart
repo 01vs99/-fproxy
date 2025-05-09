@@ -58,7 +58,7 @@ class SettingHandler {
     while (payload.isReadable()) {
       int identifier = payload.readShort();
       int value = payload.readInt();
-      // logger.d("SettingHandler.handleSettingsFrame identifier=$identifier value=$value");
+      // print("SettingHandler.handleSettingsFrame identifier=$identifier value=$value");
 
       // Handle the setting based on its identifier
       switch (identifier) {

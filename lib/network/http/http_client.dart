@@ -26,6 +26,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/channel/network.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
+import 'package:proxypin/network/util/byte_utils.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxy_manager/proxy_manager.dart';
@@ -33,6 +34,7 @@ import 'package:proxy_manager/proxy_manager.dart';
 import '../channel/channel.dart';
 import 'codec.dart';
 import 'h2/frame.dart';
+import 'h2/setting.dart';
 
 class HttpClients {
   static Future<Channel> startConnect(HostAndPort hostAndPort, {Duration timeout = const Duration(seconds: 3)}) {
@@ -70,11 +72,11 @@ class HttpClients {
 
     if (hostAndPort.isSsl()) {
       await channel.startSecureSocket(channelContext,
-          host: hostAndPort.host, supportedProtocols: request.protocolVersion == "HTTP/2" ? ["h2"] : null);
-
+          host: hostAndPort.host, supportedProtocols: request.protocolVersion == "HTTP/2" ? ["h2", "http/1.1"] : null);
       if (channelContext.serverChannel?.selectedProtocol == "h2") {
         await Http2ClientHandler(handler).listen(channel, channelContext);
       } else {
+        request.protocolVersion = "HTTP/1.1";
         channel.dispatcher.listen(channel, channelContext);
       }
     }
@@ -195,7 +197,37 @@ class Http2ClientHandler {
         onError: (error, trace) => handler.exceptionCaught(channelContext, channel, error, trace: trace),
         onDone: () => handler.channelInactive(channelContext, channel));
 
-    channel.writeBytes(Http2Codec.connectionPrefacePRI);
+    await channel.writeBytes(Http2Codec.connectionPrefacePRI);
+
+    //发送setting
+    final streamSetting = StreamSetting();
+    streamSetting.headTableSize = 65536;
+    streamSetting.initialWindowSize = 1048896;
+    streamSetting.maxHeaderListSize = 262144;
+
+    var payload = Uint8List(6 * 3);
+    int offset = 0;
+    // SETTINGS_HEADER_TABLE_SIZE
+    setInt16(payload, offset, 1);
+    offset += 2;
+    setInt32(payload, offset, streamSetting.headTableSize);
+    offset += 4;
+
+    // SETTINGS_INITIAL_WINDOW_SIZE
+    setInt16(payload, offset, 4);
+    offset += 2;
+    setInt32(payload, offset, streamSetting.initialWindowSize);
+    offset += 4;
+
+    //SETTINGS_MAX_FRAME_SIZE
+    setInt16(payload, offset, 6);
+    offset += 2;
+    setInt32(payload, offset, streamSetting.maxHeaderListSize!);
+    offset += 4;
+
+    var settingFrame = FrameHeader(payload.length, FrameType.settings, 0, 0);
+    var buffer = settingFrame.encode()..addAll(payload);
+    await channel.writeBytes(buffer);
   }
 
   onData(ChannelContext channelContext, Channel channel, Uint8List data) {

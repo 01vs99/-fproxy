@@ -17,7 +17,7 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
 
   @override
   void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) {
-    proxyChannel.write(msg);
+    proxyChannel.writeBytes(msg);
     WebSocketFrame? frame;
     try {
       frame = decoder.decode(msg);
@@ -32,6 +32,6 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
     message.messages.add(frame);
     channelContext.listener?.onMessage(channel, message, frame);
     logger.d(
-        "[${channelContext.clientChannel?.id}] socket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
+        "[${channelContext.clientChannel?.id}] websocket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
   }
 }

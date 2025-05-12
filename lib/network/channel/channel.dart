@@ -109,8 +109,8 @@ class Channel {
   ///是否是ssl链接
   bool get isSsl => _socket is SecureSocket;
 
-  Future<void> write(Object obj) async {
-    var data = dispatcher.encoder.encode(obj);
+  Future<void> write(ChannelContext channelContext, Object obj) async {
+    var data = dispatcher.encoder.encode(channelContext, obj);
     await writeBytes(data);
   }
 
@@ -135,7 +135,7 @@ class Channel {
       if (!isClosed) {
         _socket.add(bytes);
       }
-      await _socket.flush();
+      // await _socket.flush();
     } catch (e, t) {
       if (e is StateError && e.message == "StreamSink is closed") {
         isOpen = false;
@@ -148,8 +148,8 @@ class Channel {
   }
 
   ///写入并关闭此channel
-  Future<void> writeAndClose(Object obj) async {
-    await write(obj);
+  Future<void> writeAndClose(ChannelContext channelContext, Object obj) async {
+    await write(channelContext, obj);
     close();
   }
 
@@ -165,6 +165,8 @@ class Channel {
       await Future.delayed(const Duration(milliseconds: 150));
     }
     isOpen = false;
+    await _socket.flush();
+    await _socket.close();
     _socket.destroy();
   }
 

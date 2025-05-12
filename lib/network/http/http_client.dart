@@ -67,7 +67,7 @@ class HttpClients {
     var channel = await client.connect(connectHost, channelContext);
 
     if (proxyInfo != null) {
-      await connectRequest(hostAndPort, channel, proxyInfo: proxyInfo);
+      await connectRequest(channelContext, hostAndPort, channel, proxyInfo: proxyInfo);
     }
 
     if (hostAndPort.isSsl()) {
@@ -88,7 +88,8 @@ class HttpClients {
   }
 
   ///发起代理连接请求
-  static Future<Channel> connectRequest(HostAndPort hostAndPort, Channel channel, {ProxyInfo? proxyInfo}) async {
+  static Future<Channel> connectRequest(ChannelContext channelContext, HostAndPort hostAndPort, Channel channel,
+      {ProxyInfo? proxyInfo}) async {
     ChannelHandler handler = channel.dispatcher.handler;
     //代理 发送connect请求
     var httpResponseHandler = HttpResponseHandler();
@@ -103,7 +104,7 @@ class HttpClients {
       proxyRequest.headers.set(HttpHeaders.PROXY_AUTHORIZATION, 'Basic $auth');
     }
 
-    await channel.write(proxyRequest);
+    await channel.write(channelContext, proxyRequest);
     var response = await httpResponseHandler.getResponse(const Duration(seconds: 5));
 
     channel.dispatcher.handler = handler;
@@ -144,7 +145,7 @@ class HttpClients {
 
     ChannelContext channelContext = ChannelContext();
     Channel channel = await client.connect(hostAndPort, channelContext);
-    await channel.write(request);
+    await channel.write(channelContext, request);
 
     return httpResponseHandler.getResponse(timeout).whenComplete(() => channel.close());
   }
@@ -175,7 +176,7 @@ class HttpClients {
       request.headers.remove(HttpHeaders.HOST);
       request.streamId = 1;
     }
-    await channel.write(request);
+    await channel.write(channelContext, request);
     return httpResponseHandler.getResponse(timeout).whenComplete(() => channel.close());
   }
 }

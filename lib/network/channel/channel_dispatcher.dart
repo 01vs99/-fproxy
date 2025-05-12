@@ -52,7 +52,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     if (clientChannel.isSsl && !remoteChannel.isSsl) {
       //代理认证
       if (proxyInfo?.isAuthenticated == true) {
-        await HttpClients.connectRequest(remote, remoteChannel, proxyInfo: proxyInfo);
+        await HttpClients.connectRequest(channelContext, remote, remoteChannel, proxyInfo: proxyInfo);
       }
 
       await remoteChannel.secureSocket(channelContext, host: channelContext.getAttribute(AttributeKeys.domain));
@@ -152,6 +152,10 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
 
       handler.channelRead(channelContext, channel, data!);
     } catch (error, trace) {
+      logger.e(
+          "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} ${channelContext.clientChannel?.selectedProtocol} ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
+          error: error,
+          stackTrace: trace);
       buffer.clear();
       exceptionCaught(channelContext, channel, error, trace: trace);
     }
@@ -167,7 +171,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     channelContext.currentRequest?.hostAndPort = channelContext.host;
 
     logger.d("webSocket ${data.request?.hostAndPort}");
-    remoteChannel.write(data);
+    remoteChannel.write(channelContext, data);
 
     channelContext.listener?.onResponse(channelContext, data);
 
@@ -208,7 +212,7 @@ class RawCodec extends Codec<Uint8List, List<int>> {
   }
 
   @override
-  List<int> encode(dynamic data) {
+  List<int> encode(ChannelContext channelContext, dynamic data) {
     return data as List<int>;
   }
 }

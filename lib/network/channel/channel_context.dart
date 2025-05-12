@@ -1,7 +1,7 @@
-
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/codec.dart';
+import 'package:proxypin/network/http/h2/frame.dart';
 import 'package:proxypin/network/http/h2/setting.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
@@ -25,6 +25,7 @@ class ChannelContext {
 
   //http2 stream
   final Map<int, Pair<HttpRequest?, HttpResponse?>> _streams = {};
+  final Map<int, HeadersFrame> _streamDependency = {};
 
   ChannelContext();
 
@@ -82,7 +83,7 @@ class ChannelContext {
   void putStreamResponse(int streamId, HttpResponse response) {
     var pair = _streams[streamId];
     if (pair == null) {
-      pair = Pair(null,  response);
+      pair = Pair(null, response);
       _streams[streamId] = pair;
     }
 
@@ -101,5 +102,13 @@ class ChannelContext {
 
   void removeStream(int streamId) {
     _streams.remove(streamId);
+  }
+
+  void put(int streamId, HeadersFrame frame) {
+    _streamDependency[streamId] = frame;
+  }
+
+  HeadersFrame? removeStreamDependency(int streamId) {
+    return _streamDependency.remove(streamId);
   }
 }

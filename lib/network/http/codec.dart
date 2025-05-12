@@ -66,7 +66,7 @@ abstract interface class Decoder<T> {
 
 /// 编码
 abstract interface class Encoder<T> {
-  List<int> encode(T data);
+  List<int> encode(ChannelContext channelContext, T data);
 }
 
 /// 编解码器
@@ -154,9 +154,9 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
   void initialLine(BytesBuilder buffer, T message);
 
   @override
-  List<int> encode(T message) {
+  List<int> encode(ChannelContext channelContext, T message) {
     if (message.protocolVersion == "HTTP/2") {
-      return getH2Codec().encode(message);
+      return getH2Codec().encode(channelContext, message);
     }
 
     BytesBuilder builder = BytesBuilder();
@@ -278,8 +278,8 @@ class HttpServerCodec extends Codec<HttpRequest, HttpResponse> {
   }
 
   @override
-  List<int> encode(HttpResponse data) {
-    return responseCodec.encode(data);
+  List<int> encode(ChannelContext channelContext, HttpResponse data) {
+    return responseCodec.encode(channelContext, data);
   }
 }
 
@@ -293,7 +293,7 @@ class HttpClientCodec extends Codec<HttpResponse, HttpRequest> {
   }
 
   @override
-  List<int> encode(HttpRequest data) {
-    return requestCodec.encode(data);
+  List<int> encode(ChannelContext channelContext, HttpRequest data) {
+    return requestCodec.encode(channelContext, data);
   }
 }

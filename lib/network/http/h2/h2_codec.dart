@@ -108,8 +108,12 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     switch (frameHeader.type) {
       case FrameType.headers:
         //处理HEADERS帧
-        _handleHeadersFrame(channelContext, frameHeader, ByteBuf(framePayload));
+        var headersFrame = _handleHeadersFrame(channelContext, frameHeader, ByteBuf(framePayload));
         result.isDone = frameHeader.hasEndStreamFlag && frameHeader.hasEndHeadersFlag;
+        if (headersFrame.streamDependency != null) {
+          headersFrame.headerBlockFragment = [];
+          channelContext.put(frameHeader.streamIdentifier, headersFrame);
+        }
         break;
       case FrameType.continuation:
         //处理CONTINUATION帧
@@ -168,7 +172,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   List<Header> encodeHeaders(T message);
 
   @override
-  Uint8List encode(T data) {
+  Uint8List encode(ChannelContext channelContext, T data) {
     var bytesBuilder = BytesBuilder();
     if (data.headers.getInt(HttpHeaders.CONTENT_LENGTH) != null) {
       data.headers.set(HttpHeaders.CONTENT_LENGTH.toLowerCase(), "${data.body?.length ?? 0}");
@@ -179,7 +183,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     //headers
     var headers = encodeHeaders(data);
 
-    writeHeadersFrame(bytesBuilder, data.streamId!, headers, endStream: emptyBody);
+    writeHeadersFrame(bytesBuilder, channelContext, data.streamId!, headers, endStream: emptyBody);
 
     //body
     if (!emptyBody) {
@@ -199,25 +203,26 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
   void writeHeadersFrame(
     BytesBuilder bytesBuilder,
+    ChannelContext channelContext,
     int streamId,
     List<Header> headers, {
     StreamSetting? setting,
     bool endStream = true,
   }) {
     var fragment = _hpackEncoder.encode(headers);
-    var maxSize = setting?.maxFrameSize ?? maxFrameSize;
+    var maxSize = channelContext.setting?.maxFrameSize ?? maxFrameSize;
 
     if (fragment.length < maxSize) {
       int flags = FrameHeader.flagsEndHeaders;
       if (endStream) {
         flags |= FrameHeader.flagsEndStream;
       }
-      _writeFrame(bytesBuilder, FrameType.headers, flags, streamId, fragment);
+      _writeHeadersFrame(bytesBuilder, channelContext, flags, streamId, fragment);
     } else {
       var chunk = fragment.sublist(0, maxSize);
       fragment = fragment.sublist(maxSize);
 
-      _writeFrame(bytesBuilder, FrameType.headers, 0, streamId, chunk);
+      _writeHeadersFrame(bytesBuilder, channelContext, 0, streamId, chunk);
 
       while (fragment.length > maxSize) {
         var chunk = fragment.sublist(0, maxSize);
@@ -234,8 +239,29 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     }
   }
 
-  void _writeFrame(BytesBuilder bytesBuilder, FrameType type, int flag, int streamId, List<int> payload) {
-    FrameHeader frameHeader = FrameHeader(payload.length, type, flag, streamId);
+  void _writeHeadersFrame(
+      BytesBuilder bytesBuilder, ChannelContext channelContext, int flags, int streamId, List<int> payload) {
+    var streamPriority = channelContext.removeStreamDependency(streamId);
+    if (streamPriority != null) {
+      flags |= FrameHeader.flagsPriority;
+      bool exclusive = streamPriority.exclusiveDependency;
+      int streamDependency = streamPriority.streamDependency!;
+
+      payload = [
+        (exclusive ? 0x80 : 0) | (streamDependency & 0x7FFFFFFF) >> 24,
+        (streamDependency & 0x00FF0000) >> 16,
+        (streamDependency & 0x0000FF00) >> 8,
+        (streamDependency & 0x000000FF),
+        streamPriority.weight!,
+        ...payload
+      ];
+    }
+
+    _writeFrame(bytesBuilder, FrameType.headers, flags, streamId, payload);
+  }
+
+  void _writeFrame(BytesBuilder bytesBuilder, FrameType type, int flags, int streamId, List<int> payload) {
+    FrameHeader frameHeader = FrameHeader(payload.length, type, flags, streamId);
     // logger.d(
     //     "${this is Http2RequestDecoder ? 'request' : 'response'} _writeFrame streamId: ${frameHeader.streamIdentifier}  ${frameHeader.type} flags:${frameHeader.flags} endHeaders: ${frameHeader.hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag} ${payload.length}");
 
@@ -300,7 +326,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       weight = payload.readByte(); // 读取权重
 
       logger.d(
-          "PRIORITY frame parsed: exclusive=$exclusiveDependency, streamDependency=$streamDependency, weight=$weight");
+          "PRIORITY frame parsed: streamId:${frameHeader.streamIdentifier} padLength:$padLength exclusive=$exclusiveDependency, streamDependency=$streamDependency, weight=$weight");
     }
 
     var headerBlockLength = payload.length - payload.readerIndex - padLength;

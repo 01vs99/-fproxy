@@ -79,6 +79,11 @@ class HeadersFrame extends Frame {
 
   HeadersFrame(super.header, this.padLength, this.exclusiveDependency, this.streamDependency, this.weight,
       this.headerBlockFragment);
+
+  @override
+  String toString() {
+    return "HeadersFrame{padLength: $padLength, exclusiveDependency: $exclusiveDependency, streamDependency: $streamDependency, weight: $weight, headerBlockFragment: ${headerBlockFragment.length}}";
+  }
 }
 
 class DataFrame extends Frame {

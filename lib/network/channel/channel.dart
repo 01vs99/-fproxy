@@ -39,7 +39,7 @@ abstract class ChannelHandler<T> {
 
   ///连接断开
   void channelInactive(ChannelContext channelContext, Channel channel) {
-    // log.i("close $channel");
+    //log.i("[${channel.id}] close $channel");
   }
 
   void exceptionCaught(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
@@ -104,7 +104,7 @@ class Channel {
     return secureSocket;
   }
 
-  String? get selectedProtocol => isSsl ? (_socket as SecureSocket).selectedProtocol : null;
+  String? get selectedProtocol => isSsl && isOpen ? (_socket as SecureSocket).selectedProtocol : null;
 
   ///是否是ssl链接
   bool get isSsl => _socket is SecureSocket;
@@ -116,8 +116,7 @@ class Channel {
 
   Future<void> writeBytes(List<int> bytes) async {
     if (isClosed) {
-      logger.w("[$id] channel is closed");
-      return;
+      logger.w("[$id] $remoteSocketAddress channel is closed", stackTrace: StackTrace.current);
     }
 
     //只能有一个写入

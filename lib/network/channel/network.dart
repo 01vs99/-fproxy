@@ -174,17 +174,21 @@ class Server extends Network {
       //ssl自签证书
       var certificate = await CertificateManager.getCertificateContext(serviceName!);
       var selectedProtocol = remoteChannel?.selectedProtocol;
-      if (selectedProtocol != null) certificate.setAlpnProtocols([selectedProtocol], true);
+
+      var supportedProtocols = selectedProtocol != null ? [selectedProtocol] : ['http/1.1'];
+
+      certificate.setAlpnProtocols(supportedProtocols, true);
 
       //处理客户端ssl握手
-      var secureSocket = await SecureSocket.secureServer(channel.socket, certificate, bufferedData: data,
-          supportedProtocols: selectedProtocol != null ? [selectedProtocol] : null);
+      var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,
+          bufferedData: data, supportedProtocols: supportedProtocols);
+
       channel.serverSecureSocket(secureSocket, channelContext);
     } catch (error, trace) {
       logger.e('[${channel.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
       try {
         channelContext.processInfo ??=
-        await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
+            await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
       } catch (ignore) {
         /*ignore*/
       }

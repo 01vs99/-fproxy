@@ -153,7 +153,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       handler.channelRead(channelContext, channel, data!);
     } catch (error, trace) {
       logger.e(
-          "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} ${channelContext.clientChannel?.selectedProtocol} ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
+          "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} client: ${channelContext.clientChannel?.selectedProtocol} server: ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
           error: error,
           stackTrace: trace);
       buffer.clear();

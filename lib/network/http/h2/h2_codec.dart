@@ -102,7 +102,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     var result = DecoderResult<T>(isDone: false);
 
     // logger.d(
-    //     "${this is Http2RequestDecoder ? 'request' : 'response'} streamId: ${frameHeader.streamIdentifier} ${frameHeader.type} endHeaders: ${frameHeader.hasEndHeadersFlag} "
+    //     "[${channelContext.clientChannel?.id}] ${this is Http2RequestDecoder ? 'request' : 'response'} streamId:${frameHeader.streamIdentifier} ${frameHeader.type} endHeaders: ${frameHeader.hasEndHeadersFlag} "
     //     "endStream: ${frameHeader.hasEndStreamFlag} ${frameHeader.length}");
     //根据帧类型进行处理
     switch (frameHeader.type) {
@@ -192,10 +192,10 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         var chunkSize = min(maxFrameSize, payload.length);
         var chunk = payload.sublist(0, chunkSize);
         payload = payload.sublist(chunkSize);
-        _writeFrame(bytesBuilder, FrameType.data, 0, data.streamId!, chunk);
+        _writeFrame(channelContext, bytesBuilder, FrameType.data, 0, data.streamId!, chunk);
       }
 
-      _writeFrame(bytesBuilder, FrameType.data, FrameHeader.flagsEndStream, data.streamId!, payload);
+      _writeFrame(channelContext, bytesBuilder, FrameType.data, FrameHeader.flagsEndStream, data.streamId!, payload);
     }
 
     return bytesBuilder.takeBytes();
@@ -227,14 +227,15 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       while (fragment.length > maxSize) {
         var chunk = fragment.sublist(0, maxSize);
         fragment = fragment.sublist(maxSize);
-        _writeFrame(bytesBuilder, FrameType.continuation, 0, streamId, chunk);
+        _writeFrame(channelContext, bytesBuilder, FrameType.continuation, 0, streamId, chunk);
       }
 
-      _writeFrame(bytesBuilder, FrameType.continuation, FrameHeader.flagsEndHeaders, streamId, fragment);
+      _writeFrame(
+          channelContext, bytesBuilder, FrameType.continuation, FrameHeader.flagsEndHeaders, streamId, fragment);
 
       if (endStream) {
         //如果没有body，发送一个空的DATA帧
-        _writeFrame(bytesBuilder, FrameType.data, FrameHeader.flagsEndStream, streamId, []);
+        _writeFrame(channelContext, bytesBuilder, FrameType.data, FrameHeader.flagsEndStream, streamId, []);
       }
     }
   }
@@ -257,13 +258,17 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       ];
     }
 
-    _writeFrame(bytesBuilder, FrameType.headers, flags, streamId, payload);
+    // logger.d(
+    //     "[${channelContext.clientChannel?.id}] ${this is Http2RequestDecoder ? 'request' : 'response'} _writeHeadersFrame streamId:$streamId  flags:$flags originFlags:${streamPriority?.header.flags} ${streamPriority} ${payload.length}");
+
+    _writeFrame(channelContext, bytesBuilder, FrameType.headers, flags, streamId, payload);
   }
 
-  void _writeFrame(BytesBuilder bytesBuilder, FrameType type, int flags, int streamId, List<int> payload) {
+  void _writeFrame(ChannelContext channelContext, BytesBuilder bytesBuilder, FrameType type, int flags, int streamId,
+      List<int> payload) {
     FrameHeader frameHeader = FrameHeader(payload.length, type, flags, streamId);
     // logger.d(
-    //     "${this is Http2RequestDecoder ? 'request' : 'response'} _writeFrame streamId: ${frameHeader.streamIdentifier}  ${frameHeader.type} flags:${frameHeader.flags} endHeaders: ${frameHeader.hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag} ${payload.length}");
+    //     "[${channelContext.clientChannel?.id}] ${this is Http2RequestDecoder ? 'request' : 'response'} _writeFrame streamId:${frameHeader.streamIdentifier}  ${frameHeader.type} flags:${frameHeader.flags} endHeaders: ${frameHeader.hasEndHeadersFlag} endStream: ${frameHeader.hasEndStreamFlag} ${payload.length}");
 
     bytesBuilder.add(frameHeader.encode());
     bytesBuilder.add(payload);

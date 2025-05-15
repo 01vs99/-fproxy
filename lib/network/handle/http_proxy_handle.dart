@@ -24,7 +24,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   HttpProxyChannelHandler({this.listener, required this.interceptors});
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, HttpRequest msg) async {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, HttpRequest msg) async {
     //下载证书
     if (msg.uri == 'http://proxy.pin/ssl' || msg.requestUrl == 'http://127.0.0.1:${channel.socket.port}/ssl') {
       ProxyHelper.crtDownload(channelContext, channel, msg);
@@ -38,7 +38,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     //代理转发请求
     try {
-      forward(channelContext, channel, msg).catchError((error, trace) {
+      await forward(channelContext, channel, msg).catchError((error, trace) {
         exceptionCaught(channelContext, channel, error, trace: trace);
       });
     } catch (error, trace) {
@@ -88,7 +88,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
     //实现抓包代理转发
     if (httpRequest.method != HttpMethod.connect) {
       log.d(
-          "[${channel.id}] streamId:${httpRequest.streamId} ${httpRequest.protocolVersion}  ${httpRequest.method.name} ${httpRequest.requestUrl}");
+          "[${channel.id}] streamId:${httpRequest.streamId ?? ''} ${httpRequest.protocolVersion}  ${httpRequest.method.name} ${httpRequest.requestUrl}");
       if (HostFilter.filter(httpRequest.hostAndPort?.host)) {
         await remoteChannel.write(channelContext, httpRequest);
         return;
@@ -227,7 +227,7 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
   HttpResponseProxyHandler(this.clientChannel, this.interceptors, {this.listener});
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
     var request = msg.request ?? channelContext.currentRequest;
     request?.response = msg;
 

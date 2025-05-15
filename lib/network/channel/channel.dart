@@ -35,7 +35,7 @@ abstract class ChannelHandler<T> {
   void channelActive(ChannelContext context, Channel channel) {}
 
   ///读取数据事件
-  void channelRead(ChannelContext channelContext, Channel channel, T msg) {}
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, T msg) async {}
 
   ///连接断开
   void channelInactive(ChannelContext channelContext, Channel channel) {

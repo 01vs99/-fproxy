@@ -330,7 +330,7 @@ async function onResponse(context, request, response) {
       'queries': requestUri?.queryParameters,
       'headers': request.headers.toMap(),
       'method': request.method.name,
-      'body': request.decodeBodyString(),
+      'body': await request.decodeBodyString(),
       'rawBody': request.body
     };
   }

@@ -16,7 +16,7 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
   WebSocketChannelHandler(this.proxyChannel, this.message);
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
     proxyChannel.writeBytes(msg);
     WebSocketFrame? frame;
     try {

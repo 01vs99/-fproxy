@@ -111,4 +111,9 @@ class ChannelContext {
   HeadersFrame? removeStreamDependency(int streamId) {
     return _streamDependency.remove(streamId);
   }
+
+  bool containsStreamDependency(int? streamId) {
+    if (streamId == null) return false;
+    return _streamDependency.containsKey(streamId);
+  }
 }

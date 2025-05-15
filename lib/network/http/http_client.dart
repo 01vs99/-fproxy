@@ -82,7 +82,7 @@ class HttpClients {
     }
 
     logger.d(
-        "request ${hostAndPort.host}:${hostAndPort.port} ${request.protocolVersion} ${channelContext.serverChannel?.selectedProtocol}");
+        "request ${hostAndPort.host}:${hostAndPort.port} ${request.protocolVersion} ${channelContext.serverChannel?.selectedProtocol ?? ''}");
 
     return channel;
   }
@@ -266,7 +266,7 @@ class HttpResponseHandler extends ChannelHandler<HttpResponse> {
   Completer<HttpResponse> _completer = Completer<HttpResponse>();
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
     // log.i("[${channel.id}] Response $msg");
     _completer.complete(msg);
   }

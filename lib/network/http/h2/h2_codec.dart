@@ -147,7 +147,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         var errorCode = readInt32(framePayload, 4);
         var debugData = viewOrSublist(framePayload, 8, frameHeader.length - 8);
         logger.i(
-            "h2 goaway streamId: ${frameHeader.streamIdentifier} lastStreamId: $lastStreamId errorCode: $errorCode debugData: ${String.fromCharCodes(debugData)}");
+            "[${channelContext.clientChannel?.id}] ${this is Http2RequestDecoder ? 'request' : 'response'} h2 goaway streamId: ${frameHeader.streamIdentifier} lastStreamId: $lastStreamId errorCode: $errorCode debugData: ${String.fromCharCodes(debugData)}");
         result.forward = List.from(frameHeader.encode())..addAll(framePayload);
         return result;
       default:
@@ -331,7 +331,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       weight = payload.readByte(); // 读取权重
 
       logger.d(
-          "PRIORITY frame parsed: streamId:${frameHeader.streamIdentifier} padLength:$padLength exclusive=$exclusiveDependency, streamDependency=$streamDependency, weight=$weight");
+          "PRIORITY frame parsed: streamId:${frameHeader.streamIdentifier} streamDependency=$streamDependency, weight=$weight $exclusiveDependency");
     }
 
     var headerBlockLength = payload.length - payload.readerIndex - padLength;

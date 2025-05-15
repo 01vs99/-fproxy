@@ -14,12 +14,17 @@ import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
 
+import '../util/task_queue.dart';
+
 class ChannelDispatcher extends ChannelHandler<Uint8List> {
   late Decoder decoder;
   late Encoder encoder;
   late ChannelHandler handler;
 
   final ByteBuf buffer = ByteBuf();
+
+  //h2 stream dependency Sequential exec
+  SequentialTaskQueue taskQueue = SequentialTaskQueue();
 
   handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
     this.encoder = encoder;
@@ -125,8 +130,6 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
 
       var data = decodeResult.data;
       if (data is HttpMessage) {
-        // logger.d("[${channelContext.clientChannel?.id}] ${data.streamId} ${data.runtimeType}");
-
         data.packageSize = length;
         data.remoteHost = channel.remoteSocketAddress.host;
         data.remotePort = channel.remoteSocketAddress.port;
@@ -154,23 +157,25 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
 
       if (data is HttpMessage && channelContext.containsStreamDependency(data.streamId)) {
-        // logger.i("[${channelContext.clientChannel?.id}] channelRead  ${data.streamId} ${data.runtimeType}");
-
-        taskQueue.add(data.streamId!, () => handler.channelRead(channelContext, channel, data));
+        taskQueue.add(data.streamId!, channelContext.getStreamDependency(data.streamId!)?.streamDependency,
+            () => handler.channelRead(channelContext, channel, data),
+            onError: (error, stackTrace) => onError(channelContext, channel, error, trace: stackTrace));
       } else {
         await handler.channelRead(channelContext, channel, data!);
       }
     } catch (error, trace) {
-      logger.e(
-          "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} client: ${channelContext.clientChannel?.selectedProtocol} server: ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
-          error: error,
-          stackTrace: trace);
-      buffer.clear();
-      exceptionCaught(channelContext, channel, error, trace: trace);
+      onError(channelContext, channel, error, trace: trace);
     }
   }
 
-  SequentialTaskQueue taskQueue = SequentialTaskQueue();
+  onError(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
+    logger.e(
+        "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} client: ${channelContext.clientChannel?.selectedProtocol} server: ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
+        error: error,
+        stackTrace: trace);
+    buffer.clear();
+    exceptionCaught(channelContext, channel, error, trace: trace);
+  }
 
   /// websocket 处理
   onWebSocketHandle(ChannelContext channelContext, Channel channel, HttpResponse data) {
@@ -231,62 +236,4 @@ class RawCodec extends Codec<Uint8List, List<int>> {
 
 abstract interface class ChannelInitializer {
   void initChannel(Channel channel);
-}
-
-class SequentialTaskQueue {
-  final List<MapEntry<int, Future Function()>> _tasks = [];
-  bool _isProcessing = false;
-  bool _isCancelled = false;
-  Completer<void>? _completer;
-
-  /// Adds a task to the queue with a priority (e.g., streamId).
-  void add(int id, Future Function() task, {void Function(dynamic error, StackTrace stackTrace)? onError}) async {
-    print("addTask $id");
-
-    _tasks.add(MapEntry(id, () async {
-      if (_isCancelled) return;
-      try {
-        await task();
-      } catch (e, stackTrace) {
-        if (onError != null) {
-          onError(e, stackTrace);
-        } else {
-          print('Task error: $e\n$stackTrace');
-        }
-      }
-    }));
-
-    // Sort tasks by priority (e.g., streamId).
-    _tasks.sort((a, b) => a.key.compareTo(b.key));
-
-    if (!_isProcessing) {
-      _isProcessing = true;
-      _completer ??= Completer<void>();
-      while (_tasks.isNotEmpty) {
-        final currentTask = _tasks.removeAt(0).value;
-        await currentTask();
-      }
-      _isProcessing = false;
-      _completer?.complete();
-      _completer = null;
-    }
-  }
-
-  Future<void> waitForAll() async {
-    if (_isProcessing) {
-      _completer ??= Completer<void>();
-      return _completer?.future;
-    }
-    return;
-  }
-
-  void cancel() {
-    _isCancelled = true;
-    _tasks.clear();
-  }
-
-  void reset() {
-    _isCancelled = false;
-    _tasks.clear();
-  }
 }

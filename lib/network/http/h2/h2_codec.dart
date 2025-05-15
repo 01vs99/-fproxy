@@ -303,7 +303,6 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     } else {
       message.body = List.from(message.body!)..addAll(data);
     }
-    // print("DataFrame ${message.bodyAsString}");
     return DataFrame(frameHeader, padLength, data);
   }
 

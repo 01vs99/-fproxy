@@ -278,9 +278,4 @@ class HttpResponseHandler extends ChannelHandler<HttpResponse> {
   void resetResponse() {
     _completer = Completer<HttpResponse>();
   }
-
-  @override
-  void channelInactive(ChannelContext channelContext, Channel channel) {
-    // log.i("[${channel.id}] channelInactive");
-  }
 }

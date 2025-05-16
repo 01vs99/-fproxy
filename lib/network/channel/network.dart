@@ -150,6 +150,7 @@ class Server extends Network {
               channel.remoteSocketAddress, channel.remoteSocketAddress.toString());
           domain = process?.remoteHost;
           port = process?.remotePost ?? port;
+          serviceName = domain;
         }
         hostAndPort = HostAndPort.host(domain!, port, scheme: HostAndPort.httpsScheme);
       }

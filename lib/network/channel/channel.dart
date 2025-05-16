@@ -44,7 +44,7 @@ abstract class ChannelHandler<T> {
 
   void exceptionCaught(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
     HostAndPort? host = channelContext.host;
-    log.e("[${channel.id}] error $host $channel", error: error, stackTrace: trace);
+    log.e("[${channel.id}] exceptionCaught $host $channel", error: error, stackTrace: trace);
     channel.close();
   }
 }
@@ -75,6 +75,13 @@ class Channel {
 
   Socket get socket => _socket;
 
+  serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
+    _socket = secureSocket;
+    _socket.done.then((value) => isOpen = false);
+    dispatcher.listen(this, channelContext);
+  }
+
+  //向远程发起ssl连接
   Future<SecureSocket> secureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
     SecureSocket secureSocket = await SecureSocket.secure(socket,
@@ -87,13 +94,6 @@ class Channel {
     return secureSocket;
   }
 
-  ///服务端ssl握手
-  serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
-    _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
-    dispatcher.listen(this, channelContext);
-  }
-
   Future<SecureSocket> startSecureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
     SecureSocket secureSocket = await SecureSocket.secure(socket,
@@ -102,6 +102,10 @@ class Channel {
     _socket = secureSocket;
     _socket.done.then((value) => isOpen = false);
     return secureSocket;
+  }
+
+  listen(ChannelContext channelContext) {
+    dispatcher.listen(this, channelContext);
   }
 
   String? get selectedProtocol => isSsl && isOpen ? (_socket as SecureSocket).selectedProtocol : null;
@@ -134,10 +138,10 @@ class Channel {
       if (!isClosed) {
         _socket.add(bytes);
       }
-      // await _socket.flush();
+      await _socket.flush();
     } catch (e, t) {
       if (e is StateError && e.message == "StreamSink is closed") {
-        isOpen = false;
+        logger.w("[$id] $remoteSocketAddress write error channel is closed $e", stackTrace: t);
       } else {
         logger.e("[$id] write error", error: e, stackTrace: t);
       }

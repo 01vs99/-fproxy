@@ -168,7 +168,7 @@ class Server extends Network {
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : null;
-        await remoteChannel.secureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
+        await remoteChannel.startSecureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
       //ssl自签证书
@@ -184,6 +184,10 @@ class Server extends Network {
           bufferedData: data, supportedProtocols: supportedProtocols);
 
       channel.serverSecureSocket(secureSocket, channelContext);
+      // logger.d(
+      //     '[${channelContext.clientChannel?.id}] $hostAndPort ssl handshake done, selectedProtocol: ${secureSocket.selectedProtocol}');
+
+      remoteChannel?.listen(channelContext);
     } catch (error, trace) {
       logger.e('[${channelContext.clientChannel?.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
       try {

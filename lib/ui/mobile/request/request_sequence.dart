@@ -161,8 +161,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
             itemBuilder: (context, index) {
               final requestId = view.elementAt(index).requestId;
 
-              // 确保每个 requestId 对应唯一的 GlobalKey
-              final key = indexes.putIfAbsent(requestId, () => GlobalKey<RequestRowState>());
+              final key = GlobalKey<RequestRowState>();
+              indexes[requestId] = key;
 
               return RequestRow(
                   index: sortDesc ? view.length - index : index,
@@ -173,6 +173,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                   onRemove: (request) {
                     setState(() {
                       view.remove(request);
+                      indexes.remove(requestId);
                     });
                     widget.onRemove?.call([request]);
                   });

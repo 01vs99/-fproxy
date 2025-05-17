@@ -274,7 +274,7 @@ async function onResponse(context, request, response) {
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(request.attributes['scriptContext'] ?? scriptContext(item));
-        var jsRequest = jsonEncode(convertJsRequest(request));
+        var jsRequest = jsonEncode(await convertJsRequest(request));
         var jsResponse = jsonEncode(await convertJsResponse(response));
         String script = await getScript(item);
         var jsResult = await flutterJs.evaluateAsync(

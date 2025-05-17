@@ -94,30 +94,26 @@ class _ToolboxState extends State<Toolbox> {
                   onTap: () => encodeWindow(EncoderType.base64, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [Icon(Icons.format_bold), SizedBox(height: 3), Text('Base64')]),
+                    child: const Column(children: [Icon(Icons.format_bold_outlined  ), SizedBox(height: 3), Text('Base64')]),
                   )),
               const SizedBox(width: 15),
               InkWell(
                   onTap: () => encodeWindow(EncoderType.unicode, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [Icon(Icons.format_underline), SizedBox(height: 3), Text('Unicode')]),
+                    child: const Column(children: [Icon(Icons.format_underline_outlined), SizedBox(height: 3), Text('Unicode')]),
                   )),
               const SizedBox(width: 15),
               InkWell(
                   onTap: () => encodeWindow(EncoderType.md5, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [
-                      Icon(IconData(0x23, fontFamily: 'MaterialIcons')), // “#”
-                      SizedBox(height: 3),
-                      Text('MD5')
-                    ]),
+                    child: const Column(children: [Icon(Icons.tag_outlined), SizedBox(height: 3), Text('MD5')]),
                   )),
             ],
           ),
           const Divider(thickness: 0.3),
-          Text("加解密", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(localizations.cipher, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           Wrap(children: [
             InkWell(
                 onTap: () {
@@ -125,11 +121,11 @@ class _ToolboxState extends State<Toolbox> {
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AesPage()));
                     return;
                   }
-                  MultiWindow.openWindow("AES", "AesPage", size: const Size(700, 660));
+                  MultiWindow.openWindow("AES", "AesPage", size: const Size(700, 672));
                 },
                 child: Container(
                   padding: const EdgeInsets.all(10),
-                  child: const Column(children: [Icon(Icons.enhanced_encryption), SizedBox(height: 3), Text('AES')]),
+                  child:  Column(children: [Icon(Icons.enhanced_encryption_outlined), SizedBox(height: 3), Text('AES')]),
                 )),
           ]),
           const Divider(thickness: 0.3),
@@ -156,7 +152,7 @@ class _ToolboxState extends State<Toolbox> {
                     }
                     MultiWindow.openWindow(localizations.certHashName, 'CertHashPage');
                   },
-                  icon: Icons.key,
+                  icon: Icons.key_outlined,
                   text: localizations.certHashName),
               const SizedBox(width: 10),
               IconText(

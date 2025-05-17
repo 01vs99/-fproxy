@@ -90,7 +90,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
-    if (widget.appConfiguration.upgradeNoticeV18) {
+    if (widget.appConfiguration.upgradeNoticeV19) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -146,7 +146,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.appConfiguration.upgradeNoticeV18 = false;
+                      widget.appConfiguration.upgradeNoticeV19 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
@@ -160,25 +160,18 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                       isCN
                           ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
                               '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                              '1. 新增app检查更新；\n'
-                              '2. 关键词高亮支持持久化；\n'
-                              '3. 修复请求域名和tls域名不一致问题；\n'
-                              '4. 修复IPV6建立链接失败问题；\n'
-                              '5. Windows单例窗口，内置VCLibs；\n'
-                              '6. 脚本支持获取应用目录, 脚本修复字节响应请求异常问题, 脚本支持执行多个；\n'
-                              '7. 工具箱js fetch支持代理；\n'
-                              '8. 修复部分curl导入失败问题；\n'
+                              '1. 支持HTTP2协议,可在设置中开启；\n'
+                              '2. 支持zstd解码；\n'
+                              '3. 增加自动已读标记；\n'
+                              '4. 工具箱支持AES加解密；\n'
+                              '5. 修复WebSocket解析错误, 以及二进制支持下载；\n'
                           : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
                               'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-                              '1. Added app check update；\n'
-                              '2. Keyword highlighting supports persistence；\n'
-                              '3. Fixed TLS SNI inconsistency；\n'
-                              '4. Fixed the issue of IPV6 link establishment failure；\n'
-                              '5. Windows singleton window with built-in VCLibs；\n'
-                              '6. Fixed Illegal IPv6 address issue；\n'
-                              '7. The script supports obtaining application directories, fixes byte response request exception issues, and supports executing multiple instances；\n'
-                              '8. Toolbox js fetch supports proxy；\n'
-                              '9. Fixed some curl import failure issues；\n'
+                              '1. Support for HTTP2 protocol, which can be enabled in settings.\n'
+                              '2. Support for zstd decode.'
+                              '3. Added auto read marking.'
+                              '4. Toolbox now supports AES encryption and decryption.'
+                              '5. Fixed WebSocket parsing errors.'
                               '',
                       style: const TextStyle(fontSize: 14))));
         });

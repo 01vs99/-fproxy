@@ -319,6 +319,9 @@
   "nowTimestamp": "Now timestamp",
   "hosts": "Hosts",
   "toAddress": "To Address",
+  "encrypt": "Encrypt",
+  "decrypt": "Decrypt",
+  "cipher": "Cipher",
 
   "appUpdateCheckVersion": "Check for Updates",
   "appUpdateNotAvailableMsg": "Already Using The Latest Version",

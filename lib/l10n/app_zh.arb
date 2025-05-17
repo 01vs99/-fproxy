@@ -318,6 +318,9 @@
   "nowTimestamp": "当前时间戳(秒)",
   "hosts": "Hosts 映射",
   "toAddress": "映射地址",
+  "encrypt": "加密",
+  "decrypt": "解密",
+  "cipher": "加解密",
 
   "appUpdateCheckVersion": "检查更新",
   "appUpdateNotAvailableMsg": "已是最新版本",

@@ -28,7 +28,6 @@ import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
-import 'package:proxypin/ui/component/toolbox/encoder.dart';
 import 'package:proxypin/ui/component/json/json_viewer.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -41,6 +40,7 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../component/json/json_text.dart';
+import '../toolbox/encoder.dart';
 
 ///请求响应的body部分
 ///@Author wanghongen
